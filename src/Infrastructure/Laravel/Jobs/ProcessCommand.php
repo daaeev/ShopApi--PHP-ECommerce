@@ -21,7 +21,7 @@ class ProcessCommand implements ShouldQueue
     {
         try {
             $manager->dispatchCommand($this->command);
-        } catch (\DomainException|\InvalidArgumentException $e) {
+        } catch (\Throwable $e) {
             $this->fail($e);
         }
     }

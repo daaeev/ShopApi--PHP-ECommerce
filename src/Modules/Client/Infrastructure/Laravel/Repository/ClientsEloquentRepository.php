@@ -48,6 +48,8 @@ class ClientsEloquentRepository implements ClientsRepositoryInterface
         $record->save();
 
         $this->hydrator->hydrate($entity->getId(), ['id' => $record->id]);
+        $this->persistAccesses($entity, $record);
+        $this->persistConfirmations($entity, $record);
     }
 
     private function guardContactsUnique(Entity\Client $client): void
@@ -63,6 +65,32 @@ class ClientsEloquentRepository implements ClientsRepositoryInterface
 
         if ($phoneNotUnique) {
             throw new DuplicateKeyException('Client with same phone already exists');
+        }
+    }
+
+    private function persistAccesses(Entity\Client $entity, Eloquent\Client $record): void
+    {
+        $record->accesses()->delete();
+        foreach ($entity->getAccesses() as $access) {
+            $record->accesses()->create([
+                'type' => $access->getType(),
+                'credentials' => $access->getCredentials(),
+                'created_at' => $access->getCreatedAt()->getTimestamp(),
+            ]);
+        }
+    }
+
+    private function persistConfirmations(Entity\Client $entity, Eloquent\Client $record): void
+    {
+        $record->confirmations()->delete();
+        foreach ($entity->getConfirmations() as $confirmation) {
+            $record->confirmations()->create([
+                'uuid' => $confirmation->getUuid(),
+                'code' => $confirmation->getCode(),
+                'expired_at' => $confirmation->getExpiredAt()->getTimestamp(),
+                'created_at' => $confirmation->getCreatedAt()->getTimestamp(),
+                'updated_at' => $confirmation->getUpdatedAt()?->getTimestamp(),
+            ]);
         }
     }
 
@@ -128,11 +156,48 @@ class ClientsEloquentRepository implements ClientsRepositoryInterface
                 $record->phone_confirmed,
                 $record->email_confirmed,
             ),
+            'accesses' => $this->hydrateAccesses($record),
+            'confirmations' => $this->hydrateConfirmations($record),
             'createdAt' => new \DateTimeImmutable($record->created_at),
             'updatedAt' => $record->updated_at
                 ? new \DateTimeImmutable($record->updated_at)
-                : null
+                : null,
         ]);
+    }
+
+    private function hydrateAccesses(Eloquent\Client $record): array
+    {
+        return array_map(function (Eloquent\Access $access) {
+            if (Entity\Access\AccessType::PHONE === $access->type) {
+                return $this->hydrator->hydrate(Entity\Access\PhoneAccess::class, [
+                    'phone' => $access->credentials['phone'],
+                    'createdAt' => new \DateTimeImmutable($access->created_at),
+                ]);
+            }
+
+            if (Entity\Access\AccessType::SOCIAL === $access->type) {
+                return $this->hydrator->hydrate(Entity\Access\SocialAccess::class, [
+                    'email' => $access->credentials['email'],
+                    'socialId' => $access->credentials['socialId'],
+                    'createdAt' => new \DateTimeImmutable($access->created_at),
+                ]);
+            }
+
+            throw new \DomainException("Unexpected client access type '{$access->type->value}'");
+        }, $record->accesses->all());
+    }
+
+    private function hydrateConfirmations(Eloquent\Client $record): array
+    {
+        return array_map(function (Eloquent\Confirmation $confirmation) {
+            return $this->hydrator->hydrate(Entity\Confirmation\Confirmation::class, [
+                'uuid' => Entity\Confirmation\ConfirmationUuid::make($confirmation->uuid),
+                'code' => $confirmation->code,
+                'expiredAt' => new \DateTimeImmutable($confirmation->expired_at),
+                'createdAt' => new \DateTimeImmutable($confirmation->created_at),
+                'updatedAt' => $confirmation->updated_at ? new \DateTimeImmutable($confirmation->updated_at) : null,
+            ]);
+        }, $record->confirmations->all());
     }
 
     public function getByPhone(string $phone): Entity\Client

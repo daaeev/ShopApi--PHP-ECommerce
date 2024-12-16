@@ -10,6 +10,7 @@ class PhoneAccess extends Access
         private readonly string $phone
     ) {
         ContactsValidator::validatePhone($this->phone);
+        parent::__construct();
     }
 
     public function getType(): AccessType

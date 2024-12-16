@@ -4,16 +4,10 @@ services:
   php:
     build:
       context: ../../../..
-      dockerfile: php/Dockerfile
+      dockerfile: src/Infrastructure/Laravel/.docker/php/Dockerfile
     working_dir: /var/www/html
     volumes:
       - ../../../../:/var/www/html
-  composer:
-    image: composer:latest
-    working_dir: /var/www/html
-    volumes:
-      - ../../../../:/var/www/html
-    command: tail -f /dev/null
   nginx:
     image: nginx:latest
     working_dir: /var/www/html
@@ -28,14 +22,11 @@ services:
   mysql:
     image: mysql:latest
     working_dir: /var/www/html
-    volumes:
-      - ./mysql/tmp:/var/lib/mysql
     environment:
       - MYSQL_ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_DATABASE=shopapi
     ports:
       - 3306:3306
-
   phpmyadmin:
     image: phpmyadmin:latest
     working_dir: /var/www/html

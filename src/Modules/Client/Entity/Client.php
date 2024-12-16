@@ -184,7 +184,7 @@ class Client extends Aggregate
     /**
      * @return Access[]
      */
-    private function getAccesses(): array
+    public function getAccesses(): array
     {
         return $this->accesses;
     }
@@ -192,7 +192,7 @@ class Client extends Aggregate
     /**
      * @return Confirmation\Confirmation[]
      */
-    private function getConfirmations(): array
+    public function getConfirmations(): array
     {
         return $this->confirmations;
     }

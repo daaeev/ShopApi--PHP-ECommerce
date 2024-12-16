@@ -13,6 +13,7 @@ class SocialAccess extends Access
     ) {
         ContactsValidator::validateEmail($this->email);
         Assert::notEmpty($this->socialId);
+        parent::__construct();
     }
 
     public function getType(): AccessType

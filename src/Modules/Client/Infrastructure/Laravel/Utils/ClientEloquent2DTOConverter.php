@@ -7,7 +7,8 @@ use Project\Modules\Client\Infrastructure\Laravel\Models as Eloquent;
 
 class ClientEloquent2DTOConverter
 {
-    public static function convert(Eloquent\Client $record): DTO\Client {
+    public static function convert(Eloquent\Client $record): DTO\Client
+    {
         return new DTO\Client(
             $record->id,
             $record->firstname,

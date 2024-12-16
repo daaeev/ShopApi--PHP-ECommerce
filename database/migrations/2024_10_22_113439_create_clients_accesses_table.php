@@ -16,7 +16,7 @@ return new class extends Migration
             $table->unsignedBigInteger('client_id')->nullable(false);
             $table->string('type')->nullable(false);
             $table->json('credentials')->nullable();
-            $table->timestamps();
+            $table->timestamp('created_at')->nullable(false);
 
             $table->index('client_id', 'idx-clients_accesses-client_id');
             $table->foreign('client_id', 'fk-clients_accesses-client_id')
