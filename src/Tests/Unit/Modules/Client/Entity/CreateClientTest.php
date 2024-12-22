@@ -26,6 +26,8 @@ class CreateClientTest extends \PHPUnit\Framework\TestCase
         $this->assertFalse($client->getContacts()->isEmailConfirmed());
         $this->assertSame($phone, $client->getContacts()->getPhone());
         $this->assertNull($client->getContacts()->getEmail());
+        $this->assertEmpty($client->getAccesses());
+        $this->assertEmpty($client->getConfirmations());
         $this->assertNotEmpty($client->getCreatedAt());
         $this->assertNull($client->getUpdatedAt());
         $this->assertEvents($client, [new ClientCreated($client)]);
