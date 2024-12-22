@@ -74,7 +74,6 @@ class Client extends Aggregate
         }
 
         $this->accesses[] = $access;
-        $this->updated();
     }
 
     public function removeAccess(Access $access): void
@@ -82,7 +81,6 @@ class Client extends Aggregate
         foreach ($this->getAccesses() as $index => $clientAccess) {
             if ($clientAccess->equalsTo($access)) {
                 unset($this->accesses[$index]);
-                $this->updated();
                 return;
             }
         }
@@ -111,7 +109,7 @@ class Client extends Aggregate
             $lifeTimeInMinutes
         );
 
-        $this->confirmations[] = $confirmation;
+        $this->confirmations[$confirmation->getUuid()->getId()] = $confirmation;
         $this->addEvent(new ClientConfirmationCreated($this, $confirmation));
         return $confirmation->getUuid();
     }
@@ -121,49 +119,30 @@ class Client extends Aggregate
         int $lifeTimeInMinutes = 5
     ): void {
         $confirmation = $this->getConfirmation($uuid);
-        $confirmation->refreshExpiredAt($lifeTimeInMinutes);
-        $this->addEvent(new ClientConfirmationRefreshed($this, $confirmation));
+        $refreshed = $confirmation->refreshExpiredAt($lifeTimeInMinutes);
+        $this->confirmations[$uuid->getId()] = $refreshed;
+        $this->addEvent(new ClientConfirmationRefreshed($this, $refreshed));
     }
 
-    private function getConfirmation(Confirmation\ConfirmationUuid $uuid): Confirmation\Confirmation
+    public function getConfirmation(Confirmation\ConfirmationUuid $uuid): Confirmation\Confirmation
     {
-        foreach ($this->getConfirmations() as $confirmation) {
-            if ($confirmation->getUuid()->equalsTo($uuid)) {
-                return $confirmation;
-            }
+        if (!isset($this->confirmations[$uuid->getId()])) {
+            throw new \DomainException("Client does not have confirmation with uuid '$uuid'");
         }
 
-        throw new \DomainException("Client does not have confirmation with uuid '$uuid'");
+        return $this->confirmations[$uuid->getId()];
     }
 
     public function applyConfirmation(Confirmation\ConfirmationUuid $uuid, int|string $inputCode): void
     {
         $confirmation = $this->getConfirmation($uuid);
         $confirmation->validateCode($inputCode);
-        $this->removeConfirmation($uuid);
-    }
-
-    private function removeConfirmation(Confirmation\ConfirmationUuid $uuid): void
-    {
-        foreach ($this->getConfirmations() as $index => $confirmation) {
-            if ($confirmation->getUuid()->equalsTo($uuid)) {
-                unset($this->confirmations[$index]);
-                return;
-            }
-        }
-
-        throw new \DomainException("Client does not have confirmation with uuid '$uuid'");
+        unset($this->confirmations[$uuid->getId()]);
     }
 
     public function hasConfirmation(Confirmation\ConfirmationUuid $uuid): bool
     {
-        foreach ($this->getConfirmations() as $confirmation) {
-            if ($confirmation->getUuid()->equalsTo($uuid)) {
-                return true;
-            }
-        }
-
-        return false;
+        return isset($this->confirmations[$uuid->getId()]);
     }
 
     public function getId(): ClientId

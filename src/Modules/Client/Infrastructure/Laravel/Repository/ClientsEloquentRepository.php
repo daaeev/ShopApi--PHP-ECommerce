@@ -189,15 +189,18 @@ class ClientsEloquentRepository implements ClientsRepositoryInterface
 
     private function hydrateConfirmations(Eloquent\Client $record): array
     {
-        return array_map(function (Eloquent\Confirmation $confirmation) {
-            return $this->hydrator->hydrate(Entity\Confirmation\Confirmation::class, [
+        $hydrated = [];
+        foreach ($record->confirmations as $confirmation) {
+            $hydrated[$confirmation->uuid] = $this->hydrator->hydrate(Entity\Confirmation\Confirmation::class, [
                 'uuid' => Entity\Confirmation\ConfirmationUuid::make($confirmation->uuid),
                 'code' => $confirmation->code,
                 'expiredAt' => new \DateTimeImmutable($confirmation->expired_at),
                 'createdAt' => new \DateTimeImmutable($confirmation->created_at),
                 'updatedAt' => $confirmation->updated_at ? new \DateTimeImmutable($confirmation->updated_at) : null,
             ]);
-        }, $record->confirmations->all());
+        }
+
+        return $hydrated;
     }
 
     public function getByPhone(string $phone): Entity\Client

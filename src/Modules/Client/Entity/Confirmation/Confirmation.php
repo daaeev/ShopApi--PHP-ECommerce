@@ -17,14 +17,21 @@ class Confirmation
     ) {
         $this->uuid = $uuid;
         $this->code = $code;
-        $this->refreshExpiredAt($lifeTimeInMinutes);
+        $this->expiredAt = new \DateTimeImmutable("+$lifeTimeInMinutes minutes");
         $this->createdAt = new \DateTimeImmutable;
     }
 
-    public function refreshExpiredAt(int $lifeTimeInMinutes = 5): void
+    public function __clone(): void
     {
-        $this->expiredAt = new \DateTimeImmutable("+$lifeTimeInMinutes minutes");
-        $this->updatedAt = new \DateTimeImmutable;
+        $this->uuid = clone $this->uuid;
+    }
+
+    public function refreshExpiredAt(int $lifeTimeInMinutes = 5): self
+    {
+        $refreshed = clone $this;
+        $refreshed->expiredAt = new \DateTimeImmutable("+$lifeTimeInMinutes minutes");
+        $refreshed->updatedAt = new \DateTimeImmutable;
+        return $refreshed;
     }
 
     public function validateCode(int|string $inputCode): void

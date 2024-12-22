@@ -4,10 +4,12 @@ namespace Project\Modules\Client\Entity\Access;
 
 abstract class Access
 {
+    private readonly AccessType $type;
     private readonly \DateTimeImmutable $createdAt;
 
-    public function __construct()
+    public function __construct(AccessType $type)
     {
+        $this->type = $type;
         $this->createdAt = new \DateTimeImmutable;
     }
 
@@ -17,12 +19,15 @@ abstract class Access
             && ($other->getCredentials() === $this->getCredentials());
     }
 
+    public function getType(): AccessType
+    {
+        return $this->type;
+    }
+
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
-
-    abstract public function getType(): AccessType;
 
     abstract public function getCredentials(): array;
 }
