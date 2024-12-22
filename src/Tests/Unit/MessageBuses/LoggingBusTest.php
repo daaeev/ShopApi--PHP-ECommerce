@@ -28,7 +28,7 @@ class LoggingBusTest extends TestCase
 
         $message = 'Dispatch message: ' . $command::class . ' with params ' . json_encode(get_object_vars($command));
         $loggerMock->expects($this->once())
-            ->method('info')
+            ->method('debug')
             ->with($message);
 
         $loggingBus = new LoggingBusDecorator($decoratedBusMock, $loggerMock);
