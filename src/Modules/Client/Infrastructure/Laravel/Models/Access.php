@@ -8,6 +8,7 @@ use Project\Modules\Client\Entity\Access\AccessType;
 class Access extends Model
 {
     protected $table = 'clients_accesses';
+    public $timestamps = false;
 
     protected $fillable = [
         'client_id',

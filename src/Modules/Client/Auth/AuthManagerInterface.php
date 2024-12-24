@@ -9,5 +9,7 @@ interface AuthManagerInterface
 {
     public function authorize(Access $access): void;
 
+    public function logout(): void;
+
     public function logged(): ?Client;
 }

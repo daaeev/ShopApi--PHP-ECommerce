@@ -16,4 +16,9 @@ class Uuid extends Id
     {
         return new static(RamseyUuid::uuid4());
     }
+
+    public static function make($id): static
+    {
+        return new static(RamseyUuid::fromString($id));
+    }
 }

@@ -83,7 +83,7 @@ class ClientsMemoryRepository implements ClientsRepositoryInterface
     {
         $identityMapClients = $this->identityMap->all();
         foreach ($identityMapClients as $client) {
-            if ($phone === $client->getPhone()) {
+            if ($phone === $client->getContacts()->getPhone()) {
                 return $client;
             }
         }

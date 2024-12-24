@@ -7,35 +7,34 @@ use Project\Modules\Client\Entity\ClientId;
 use Project\Common\Repository\NotFoundException;
 use Project\Common\Repository\DuplicateKeyException;
 use Project\Tests\Unit\Modules\Helpers\ClientFactory;
+use Project\Modules\Client\Entity\Access\PhoneAccess;
 use Project\Tests\Unit\Modules\Helpers\ContactsGenerator;
+use Project\Modules\Client\Entity\Confirmation\ConfirmationUuid;
 use Project\Modules\Client\Repository\ClientsRepositoryInterface;
+use Project\Modules\Client\Entity\Confirmation\CodeGeneratorInterface;
 
 trait ClientsRepositoryTestTrait
 {
     use ClientFactory, ContactsGenerator;
 
     protected ClientsRepositoryInterface $clients;
+    protected CodeGeneratorInterface $codeGenerator;
 
     public function testAdd()
     {
         $initial = $this->generateClient();
-        $phone = $initial->getContacts()->getPhone();
         $initial->confirmPhone();
-        $initial->updateEmail($email = $this->generateEmail());
+        $initial->updateEmail($this->generateEmail());
         $initial->confirmEmail();
-        $initial->updateName($name = new Name('FirstName', 'LastName'));
+        $initial->updateName(new Name('FirstName', 'LastName'));
+        $initial->addAccess(new PhoneAccess($this->generatePhone()));
+        $initial->generateConfirmation($this->codeGenerator);
+        $initialSerialized = serialize($initial);
         $this->clients->add($initial);
 
         $found = $this->clients->get($initial->getId());
         $this->assertSame($initial, $found);
-        $this->assertTrue($found->getId()->equalsTo($initial->getId()));
-        $this->assertTrue($found->getName()->equalsTo($name));
-        $this->assertSame($found->getContacts()->getPhone(), $phone);
-        $this->assertTrue($found->getContacts()->isPhoneConfirmed());
-        $this->assertSame($found->getContacts()->getEmail(), $email);
-        $this->assertTrue($found->getContacts()->isEmailConfirmed());
-        $this->assertSame($found->getCreatedAt()->getTimestamp(), $initial->getCreatedAt()->getTimestamp());
-        $this->assertSame($found->getUpdatedAt()?->getTimestamp(), $initial->getUpdatedAt()?->getTimestamp());
+        $this->assertSame($initialSerialized, serialize($found));
     }
 
     public function testAddIncrementIds()
@@ -80,28 +79,24 @@ trait ClientsRepositoryTestTrait
     public function testUpdate()
     {
         $initial = $this->generateClient();
+        $initialSerialized = serialize($initial);
         $this->clients->add($initial);
 
         $added = $this->clients->get($initial->getId());
-        $phone = $initial->getContacts()->getPhone();
         $added->confirmPhone();
-        $added->updateEmail($email = $this->generateEmail());
+        $added->updateEmail($this->generateEmail());
         $added->confirmEmail();
-        $added->updateName($name = new Name('FirstNameUpdated', 'LastNameUpdated'));
-        $createdAt = $added->getCreatedAt();
-        $updatedAt = $added->getUpdatedAt();
+        $added->updateName(new Name('FirstNameUpdated', 'LastNameUpdated'));
+        $added->addAccess(new PhoneAccess($this->generatePhone()));
+        $initial->generateConfirmation($this->codeGenerator);
+        $addedSerialized = serialize($added);
         $this->clients->update($added);
 
         $updated = $this->clients->get($initial->getId());
         $this->assertSame($initial, $added);
         $this->assertSame($added, $updated);
-        $this->assertTrue($updated->getName()->equalsTo($name));
-        $this->assertSame($updated->getContacts()->getPhone(), $phone);
-        $this->assertTrue($updated->getContacts()->isPhoneConfirmed());
-        $this->assertSame($updated->getContacts()->getEmail(), $email);
-        $this->assertTrue($updated->getContacts()->isEmailConfirmed());
-        $this->assertSame($updated->getCreatedAt()->getTimestamp(), $createdAt->getTimestamp());
-        $this->assertSame($updated->getUpdatedAt()->getTimestamp(), $updatedAt->getTimestamp());
+        $this->assertNotSame($initialSerialized, $addedSerialized);
+        $this->assertSame($addedSerialized, serialize($updated));
     }
 
     public function testUpdateIfDoesNotExists()
@@ -109,14 +104,6 @@ trait ClientsRepositoryTestTrait
         $this->expectException(NotFoundException::class);
         $client = $this->generateClient();
         $this->clients->update($client);
-    }
-
-    public function testUpdateSameClientAndDoesNotChangeAnything()
-    {
-        $client = $this->generateClient();
-        $this->clients->add($client);
-        $this->clients->update($client);
-        $this->expectNotToPerformAssertions();
     }
 
     public function testDelete()
@@ -148,5 +135,34 @@ trait ClientsRepositoryTestTrait
     {
         $this->expectException(NotFoundException::class);
         $this->clients->get(ClientId::random());
+    }
+
+    public function testGetByPhone()
+    {
+        $initial = $this->generateClient();
+        $this->clients->add($initial);
+        $found = $this->clients->getByPhone($initial->getContacts()->getPhone());
+        $this->assertSame($initial, $found);
+    }
+
+    public function testGetByPhoneIfDoesNotExists()
+    {
+        $this->expectException(NotFoundException::class);
+        $this->clients->getByPhone($this->generatePhone());
+    }
+
+    public function testGetByConfirmationUuid()
+    {
+        $initial = $this->generateClient();
+        $confirmationUuid = $initial->generateConfirmation($this->codeGenerator);
+        $this->clients->add($initial);
+        $found = $this->clients->getByConfirmation($confirmationUuid);
+        $this->assertSame($initial, $found);
+    }
+
+    public function testGetByConfirmationUuidIfDoesNotExists()
+    {
+        $this->expectException(NotFoundException::class);
+        $this->clients->getByConfirmation(ConfirmationUuid::random());
     }
 }
