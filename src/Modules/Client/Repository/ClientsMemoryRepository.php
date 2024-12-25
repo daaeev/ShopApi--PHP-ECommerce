@@ -102,4 +102,16 @@ class ClientsMemoryRepository implements ClientsRepositoryInterface
 
         throw new NotFoundException('Client does not exists');
     }
+
+    public function getByAccess(Entity\Access\Access $access): Entity\Client
+    {
+        $identityMapClients = $this->identityMap->all();
+        foreach ($identityMapClients as $client) {
+            if ($client->hasAccess($access)) {
+                return $client;
+            }
+        }
+
+        throw new NotFoundException('Client does not exists');
+    }
 }

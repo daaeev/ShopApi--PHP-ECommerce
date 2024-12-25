@@ -17,4 +17,6 @@ interface ClientsRepositoryInterface
     public function getByPhone(string $phone): Entity\Client;
 
     public function getByConfirmation(Entity\Confirmation\ConfirmationUuid $confirmationUuid): Entity\Client;
+
+    public function getByAccess(Entity\Access\Access $access): Entity\Client;
 }

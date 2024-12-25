@@ -240,4 +240,23 @@ class ClientsEloquentRepository implements ClientsRepositoryInterface
         $this->identityMap->add($client->getId()->getId(), $client);
         return $client;
     }
+
+    public function getByAccess(Entity\Access\Access $access): Entity\Client
+    {
+        $identityMapClients = $this->identityMap->all();
+        foreach ($identityMapClients as $client) {
+            if ($client->hasAccess($access)) {
+                return $client;
+            }
+        }
+
+        $record = Eloquent\Client::query()->hasAccess($access)->first();
+        if (empty($record)) {
+            throw new NotFoundException('Client does not exists');
+        }
+
+        $client = $this->hydrate($record);
+        $this->identityMap->add($client->getId()->getId(), $client);
+        return $client;
+    }
 }

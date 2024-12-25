@@ -111,6 +111,7 @@ trait ClientsRepositoryTestTrait
         $client = $this->generateClient();
         $this->clients->add($client);
         $this->clients->delete($client);
+
         $this->expectException(NotFoundException::class);
         $this->clients->get($client->getId());
     }
@@ -141,6 +142,7 @@ trait ClientsRepositoryTestTrait
     {
         $initial = $this->generateClient();
         $this->clients->add($initial);
+
         $found = $this->clients->getByPhone($initial->getContacts()->getPhone());
         $this->assertSame($initial, $found);
     }
@@ -156,6 +158,7 @@ trait ClientsRepositoryTestTrait
         $initial = $this->generateClient();
         $confirmationUuid = $initial->generateConfirmation($this->codeGenerator);
         $this->clients->add($initial);
+
         $found = $this->clients->getByConfirmation($confirmationUuid);
         $this->assertSame($initial, $found);
     }
@@ -164,5 +167,23 @@ trait ClientsRepositoryTestTrait
     {
         $this->expectException(NotFoundException::class);
         $this->clients->getByConfirmation(ConfirmationUuid::random());
+    }
+
+    public function testGetByAccess()
+    {
+        $initial = $this->generateClient();
+        $access = new PhoneAccess($this->generatePhone());
+        $initial->addAccess($access);
+        $this->clients->add($initial);
+
+        $found = $this->clients->getByAccess($access);
+        $this->assertSame($initial, $found);
+    }
+
+    public function testGetByAccessIfDoesNotExists()
+    {
+        $access = new PhoneAccess($this->generatePhone());
+        $this->expectException(NotFoundException::class);
+        $this->clients->getByAccess($access);
     }
 }

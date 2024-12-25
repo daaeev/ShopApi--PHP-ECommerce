@@ -8,7 +8,6 @@ use Illuminate\Contracts\Auth\StatefulGuard;
 use Project\Modules\Client\Entity\Access\Access;
 use Project\Modules\Client\Auth\AuthManagerInterface;
 use Project\Modules\Client\Repository\ClientsRepositoryInterface;
-use Project\Modules\Client\Infrastructure\Laravel\Models as Eloquent;
 
 class GuardAuthManager implements AuthManagerInterface
 {
@@ -23,12 +22,8 @@ class GuardAuthManager implements AuthManagerInterface
             throw new \DomainException('Client already authenticated');
         }
 
-        $client = Eloquent\Client::query()->hasAccess($access)->first();
-        if (empty($client)) {
-            throw new \DomainException('Credentials does not match to any client');
-        }
-
-        $this->guard->loginUsingId($client->id);
+        $client = $this->clients->getByAccess($access);
+        $this->guard->loginUsingId($client->getId()->getId());
     }
 
     public function logout(): void
