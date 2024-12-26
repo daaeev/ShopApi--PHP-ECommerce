@@ -18,31 +18,22 @@ trait AdminsRepositoryTestTrait
     public function testAdd()
     {
         $initial = $this->generateAdmin();
-        $id = $initial->getId();
-        $name = $initial->getName();
-        $login = $initial->getLogin();
-        $password = $initial->getPassword();
-        $roles = $initial->getRoles();
-
+        $initialSerialized = serialize($initial);
         $this->admins->add($initial);
 
         $found = $this->admins->get($initial->getId());
         $this->assertSame($initial, $found);
-        $this->assertTrue($found->getId()->equalsTo($id));
-        $this->assertSame($found->getName(), $name);
-        $this->assertSame($found->getLogin(), $login);
-        $this->assertSame($found->getPassword(), $password);
-        $this->assertSame($found->getRoles(), $roles);
+        $this->assertSame($initialSerialized, serialize($found));
     }
 
     public function testAddIncrementIds()
     {
         $admin = $this->makeAdmin(
-            AdminId::next(),
-            uniqid(),
-            $this->correctAdminLogin,
-            $this->correctAdminPassword,
-            [Role::ADMIN]
+            id: AdminId::next(),
+            name: uniqid(),
+            login: $this->correctAdminLogin,
+            password: $this->correctAdminPassword,
+            roles: [Role::ADMIN]
         );
 
         $this->admins->add($admin);
@@ -53,11 +44,11 @@ trait AdminsRepositoryTestTrait
     {
         $admin = $this->generateAdmin();
         $adminWithSameId = $this->makeAdmin(
-            $admin->getId(),
-            $admin->getName(),
-            $this->correctAdminLogin,
-            $admin->getPassword(),
-            $admin->getRoles()
+            id: $admin->getId(),
+            name: $admin->getName(),
+            login: $this->correctAdminLogin,
+            password: $admin->getPassword(),
+            roles: $admin->getRoles()
         );
 
         $this->admins->add($admin);
@@ -78,6 +69,8 @@ trait AdminsRepositoryTestTrait
     public function testUpdate()
     {
         $initial = $this->generateAdmin();
+        $initialSerialized = serialize($initial);
+
         $this->admins->add($initial);
         $added = $this->admins->get($initial->getId());
 
@@ -85,15 +78,14 @@ trait AdminsRepositoryTestTrait
         $added->setLogin($this->correctAdminLogin);
         $added->setPassword($this->correctAdminPassword);
         $added->setRoles([Role::MANAGER]);
+        $addedSerialized = serialize($added);
         $this->admins->update($added);
 
         $updated = $this->admins->get($initial->getId());
         $this->assertSame($initial, $added);
         $this->assertSame($added, $updated);
-        $this->assertSame($added->getName(), 'Updated admin name for test update');
-        $this->assertSame($added->getLogin(), $this->correctAdminLogin);
-        $this->assertSame($added->getPassword(), $this->correctAdminPassword);
-        $this->assertSame($added->getRoles(), [Role::MANAGER]);
+        $this->assertNotSame($initialSerialized, $addedSerialized);
+        $this->assertSame($addedSerialized, serialize($updated));
     }
 
     public function testUpdateIfDoesNotExists()
@@ -112,14 +104,6 @@ trait AdminsRepositoryTestTrait
         $adminWithNotUniqueLogin->setLogin($admin->getLogin());
         $this->expectException(DuplicateKeyException::class);
         $this->admins->update($adminWithNotUniqueLogin);
-    }
-
-    public function testUpdateAdminAndDoesNotChangeLogin()
-    {
-        $admin = $this->generateAdmin();
-        $this->admins->add($admin);
-        $this->admins->update($admin);
-        $this->expectNotToPerformAssertions();
     }
 
     public function testDelete()
@@ -142,5 +126,27 @@ trait AdminsRepositoryTestTrait
     {
         $this->expectException(NotFoundException::class);
         $this->admins->get(AdminId::random());
+    }
+
+    public function testGetByCredentials()
+    {
+        $admin = $this->generateAdmin();
+        $this->admins->add($admin);
+        $found = $this->admins->getByCredentials($admin->getLogin(), $admin->getPassword());
+        $this->assertSame($admin, $found);
+    }
+
+    public function testGetByCredentialsIfDoesNotExists()
+    {
+        $this->expectException(NotFoundException::class);
+        $this->admins->getByCredentials($this->correctAdminLogin, $this->correctAdminPassword);
+    }
+
+    public function testGetByCredentialsIfLoginExistsButPasswordMismatch()
+    {
+        $admin = $this->generateAdmin();
+        $this->admins->add($admin);
+        $this->expectException(NotFoundException::class);
+        $this->admins->getByCredentials($admin->getLogin(), uniqid());
     }
 }

@@ -2,51 +2,47 @@
 
 namespace Project\Modules\Administrators\Infrastructure\Laravel\AuthManager;
 
-use Illuminate\Contracts\Auth\Guard;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Request;
-use Project\Common\Administrators\Role;
+use Illuminate\Contracts\Session\Session;
 use Project\Modules\Administrators\Entity;
-use Project\Common\Entity\Hydrator\Hydrator;
-use Illuminate\Auth\AuthenticationException;
-use Project\Infrastructure\Laravel\Auth\AuthGuard;
+use Illuminate\Contracts\Auth\StatefulGuard;
+use Project\Common\Repository\NotFoundException;
 use Project\Modules\Administrators\AuthManager\AuthManagerInterface;
+use Project\Modules\Administrators\Repository\AdminsRepositoryInterface;
 
 class GuardAuthManager implements AuthManagerInterface
 {
-    private Guard $guard;
-
     public function __construct(
-        private Hydrator $hydrator
-    ) {
-        $this->guard = Auth::guard(AuthGuard::ADMIN->value);
-    }
+        private readonly StatefulGuard $guard,
+        private readonly Session $session,
+        private readonly AdminsRepositoryInterface $admins,
+    ) {}
 
     public function login(string $login, string $password): void
     {
         if ($this->guard->check()) {
-            throw new AuthenticationException('You already authorized');
+            throw new \DomainException('You already authorized');
         }
 
-        $this->guard->attempt([
-            'login' => $login,
-            'password' => $password
-        ], remember: true);
+        try {
+            $admin = $this->admins->getByCredentials($login, $password);
+        } catch (NotFoundException) {
+            throw new \DomainException('Credentials does not match');
+        }
 
-        if (!$this->guard->check()) {
-            throw new AuthenticationException('Credentials does not match');
+        if (false === $this->guard->loginUsingId($admin->getId()->getId())) {
+            throw new \DomainException('Credentials does not match');
         }
     }
 
     public function logout(): void
     {
         if (!$this->guard->check()) {
-            throw new AuthenticationException('You does not authorized');
+            throw new \DomainException('You does not authorized');
         }
 
         $this->guard->logout();
-        Request::session()->invalidate();
-        Request::session()->regenerateToken();
+        $this->session->invalidate();
+        $this->session->regenerateToken();
     }
 
     public function logged(): ?Entity\Admin
@@ -55,14 +51,7 @@ class GuardAuthManager implements AuthManagerInterface
             return null;
         }
 
-        $admin = $this->guard->user();
-        return $this->hydrator->hydrate(Entity\Admin::class, [
-            'id' => new Entity\AdminId($admin->id),
-            'name' => $admin->name,
-            'login' => $admin->login,
-            'roles' => array_map(function (string $role) {
-                return Role::from($role);
-            }, $admin->roles),
-        ]);
+        $adminId = $this->guard->id();
+        return $this->admins->get(Entity\AdminId::make($adminId));
     }
 }

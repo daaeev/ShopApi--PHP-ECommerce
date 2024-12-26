@@ -13,4 +13,6 @@ interface AdminsRepositoryInterface
     public function delete(Entity\Admin $entity): void;
 
     public function get(Entity\AdminId $id): Entity\Admin;
+
+    public function getByCredentials(string $login, string $password): Entity\Admin;
 }

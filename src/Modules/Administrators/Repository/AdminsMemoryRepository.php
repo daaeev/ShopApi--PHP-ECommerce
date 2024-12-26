@@ -10,7 +10,6 @@ use Project\Common\Repository\DuplicateKeyException;
 
 class AdminsMemoryRepository implements AdminsRepositoryInterface
 {
-    private array $items = [];
     private int $increment = 0;
 
     public function __construct(
@@ -26,17 +25,16 @@ class AdminsMemoryRepository implements AdminsRepositoryInterface
             $this->hydrator->hydrate($entity->getId(), ['id' => ++$this->increment]);
         }
 
-        if (isset($this->items[$entity->getId()->getId()])) {
+        if ($this->identityMap->has($entity->getId()->getId())) {
             throw new DuplicateKeyException('Admin with same id already exists');
         }
 
         $this->identityMap->add($entity->getId()->getId(), $entity);
-        $this->items[$entity->getId()->getId()] = clone $entity;
     }
 
     private function guardLoginUnique(Entity\Admin $entity): void
     {
-        foreach ($this->items as $item) {
+        foreach ($this->identityMap->all() as $item) {
             if ($entity->getId()->equalsTo($item->getId())) {
                 continue;
             }
@@ -50,39 +48,41 @@ class AdminsMemoryRepository implements AdminsRepositoryInterface
     public function update(Entity\Admin $entity): void
     {
         $this->guardLoginUnique($entity);
-
-        if (empty($this->items[$entity->getId()->getId()])) {
+        if (!$this->identityMap->has($entity->getId()->getId())) {
             throw new NotFoundException('Admin does not exists');
         }
-
-        $this->items[$entity->getId()->getId()] = clone $entity;
     }
 
     public function delete(Entity\Admin $entity): void
     {
-        if (empty($this->items[$entity->getId()->getId()])) {
+        if (!$this->identityMap->has($entity->getId()->getId())) {
             throw new NotFoundException('Admin does not exists');
         }
 
         $this->identityMap->remove($entity->getId()->getId());
-        unset($this->items[$entity->getId()->getId()]);
     }
 
     public function get(Entity\AdminId $id): Entity\Admin
     {
-        if (empty($this->items[$id->getId()])) {
+        if (empty($id->getId())) {
             throw new NotFoundException('Admin does not exists');
         }
 
-        if ($this->identityMap->has($id->getId())) {
-            return $this->identityMap->get($id->getId());
+        if (!$this->identityMap->has($id->getId())) {
+            throw new NotFoundException('Admin does not exists');
         }
 
-        $entity = clone $this->items[$id->getId()];
-        $this->identityMap->add($id->getId(), $entity);
-        // Passwords saves in db using hashed value.
-        // And repository does not decode value and does not retrieve password
-        $this->hydrator->hydrate($entity, ['password' => null]);
-        return $entity;
+        return $this->identityMap->get($id->getId());
+    }
+
+    public function getByCredentials(string $login, string $password): Entity\Admin
+    {
+        foreach ($this->identityMap->all() as $admin) {
+            if (($admin->getLogin() === $login) && ($admin->getPassword() === $password)) {
+                return $admin;
+            }
+        }
+
+        throw new NotFoundException('Admin does not exists');
     }
 }

@@ -15,9 +15,9 @@ use Project\Modules\Administrators\Infrastructure\Laravel\Models as Eloquent;
 class AdminsEloquentRepository implements AdminsRepositoryInterface
 {
     public function __construct(
-        private Hydrator $hydrator,
-        private IdentityMap $identityMap,
-        private Hasher $hasher,
+        private readonly Hydrator $hydrator,
+        private readonly IdentityMap $identityMap,
+        private readonly Hasher $hasher,
     ) {}
 
     public function add(Entity\Admin $entity): void
@@ -121,5 +121,30 @@ class AdminsEloquentRepository implements AdminsRepositoryInterface
                 return Role::from($role);
             }, $record->roles),
         ]);
+    }
+
+    public function getByCredentials(string $login, string $password): Entity\Admin
+    {
+        foreach ($this->identityMap->all() as $admin) {
+            if (($admin->getLogin() === $login) && ($admin->getPassword() === $password)) {
+                return $admin;
+            }
+        }
+
+        $record = Eloquent\Administrator::query()
+            ->where('login', $login)
+            ->first();
+
+        if (empty($record)) {
+            throw new NotFoundException('Admin does not exists');
+        }
+
+        if (false === $this->hasher->check($password, $record->password)) {
+            throw new NotFoundException('Admin does not exists');
+        }
+
+        $entity = $this->hydrate($record);
+        $this->identityMap->add($entity->getId()->getId(), $entity);
+        return $entity;
     }
 }
