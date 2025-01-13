@@ -27,8 +27,8 @@ class ClientConfirmationEventsDeserializer
         return $this->event->confirmation['code'];
     }
 
-    public function getConfirmationExpiredAt(): string
+    public function getConfirmationExpiredAt(): \DateTimeImmutable
     {
-        return $this->event->confirmation['expiredAt'];
+        return new \DateTimeImmutable($this->event->confirmation['expiredAt']);
     }
 }

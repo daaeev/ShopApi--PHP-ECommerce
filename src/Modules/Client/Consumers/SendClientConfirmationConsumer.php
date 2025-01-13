@@ -16,7 +16,7 @@ class SendClientConfirmationConsumer
 
     public function __invoke(ClientConfirmationEventsDeserializer $event): void
     {
-        $expiredAt = (new \DateTimeImmutable($event->getConfirmationExpiredAt()))->format('H:i:s');
+        $expiredAt = $event->getConfirmationExpiredAt()->format('H:i:s');
         $message = $this->translator->translate(
             key: 'client.yourConfirmationCode',
             default: "Ваш код підтвердження: {$event->getConfirmationCode()}. Дійсний до $expiredAt",
