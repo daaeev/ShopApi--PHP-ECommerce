@@ -18,6 +18,10 @@ class LaravelTranslator implements TranslatorInterface
     {
         $fullKey = "$this->namespace::$key";
         $translation = $this->translator->get($fullKey, $params, $this->environment->getLanguage()->value);
-        return ($translation === $fullKey) ? $default : $translation;
+        if ($translation === $fullKey) {
+            return str_replace(array_keys($params), array_values($params), $default);
+        }
+
+        return $translation;
     }
 }
