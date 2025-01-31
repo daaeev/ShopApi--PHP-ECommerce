@@ -2,9 +2,10 @@
 
 use Illuminate\Support\Facades\Route;
 use Project\Common\Administrators\Role;
+use Project\Infrastructure\Laravel\Auth\AuthGuard;
 use Project\Infrastructure\Laravel\API\Controllers\Promocodes\PromocodesController;
 
-Route::middleware(['auth:admin', 'hasAccess:' . Role::MANAGER->value])
+Route::middleware(['auth:' . AuthGuard::ADMIN->value, 'hasAccess:' . Role::MANAGER->value])
     ->prefix('admin/promocodes')
     ->group(function () {
         Route::post('', [PromocodesController::class, 'create']);

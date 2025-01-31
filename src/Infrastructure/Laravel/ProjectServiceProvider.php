@@ -4,6 +4,7 @@ namespace Project\Infrastructure\Laravel;
 
 use Psr\Log\LoggerInterface;
 use Illuminate\Support\Facades\Config;
+use Project\Modules\Client\Api\ClientsApi;
 use Project\Common\Commands\SendSmsCommand;
 use Project\Common\Services\SMS\LogSmsSender;
 use Project\Common\Services\SMS\SmsSenderInterface;
@@ -81,6 +82,7 @@ class ProjectServiceProvider extends \Illuminate\Support\ServiceProvider
             return new EnvironmentService(
                 $app->make(CookieManagerInterface::class),
                 $app->make(AdministratorsApi::class),
+                $app->make(ClientsApi::class),
                 config('project.application.client-hash-cookie-name'),
             );
         });

@@ -4,10 +4,13 @@ namespace Project\Modules\Client\Infrastructure\Laravel;
 
 use Project\Modules\Client\Queries;
 use Project\Modules\Client\Commands;
+use Illuminate\Support\Facades\Auth;
 use Project\Modules\Client\Consumers;
 use Project\Modules\Client\Repository;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Request;
 use Project\Modules\Client\Api\Events\ClientEvent;
+use Project\Infrastructure\Laravel\Auth\AuthGuard;
 use Project\Modules\Client\Auth\AuthManagerInterface;
 use Project\Common\ApplicationMessages\Buses\EventBus;
 use Project\Common\ApplicationMessages\Buses\RequestBus;
@@ -25,8 +28,8 @@ use Project\Modules\Client\Infrastructure\Laravel\Repository\QueryClientsEloquen
 class ClientsServiceProvider extends ServiceProvider
 {
     private array $commandsMapping = [
-        Commands\GenerateConfirmationCommand::class => Commands\Handlers\GenerateConfirmationHandler::class,
-        Commands\RefreshConfirmationCommand::class => Commands\Handlers\RefreshConfirmationHandler::class,
+        Commands\GeneratePhoneConfirmationCommand::class => Commands\Handlers\GeneratePhoneConfirmationHandler::class,
+        Commands\RefreshPhoneConfirmationCommand::class => Commands\Handlers\RefreshPhoneConfirmationHandler::class,
         Commands\ConfirmClientPhoneCommand::class => Commands\Handlers\ConfirmClientPhoneHandler::class,
         Commands\LogoutClientCommand::class => Commands\Handlers\LogoutClientHandler::class,
     ];
@@ -34,12 +37,12 @@ class ClientsServiceProvider extends ServiceProvider
     private array $queriesMapping = [
         Queries\GetClientQuery::class => Queries\Handlers\GetClientHandler::class,
         Queries\GetClientsQuery::class => Queries\Handlers\GetClientsHandler::class,
+        Queries\GetAuthenticatedClientQuery::class => Queries\Handlers\GetAuthenticatedClientHandler::class,
     ];
 
     public array $singletons = [
         Repository\ClientsRepositoryInterface::class => ClientsEloquentRepository::class,
         Repository\QueryClientsRepositoryInterface::class => QueryClientsEloquentRepository::class,
-        AuthManagerInterface::class => GuardAuthManager::class,
     ];
 
     private function getEventsMapping(): array
@@ -62,9 +65,10 @@ class ClientsServiceProvider extends ServiceProvider
     public function register()
     {
         $this->registerConfirmationGenerator();
+        $this->registerAuthManager();
     }
 
-    private function registerConfirmationGenerator()
+    private function registerConfirmationGenerator(): void
     {
         $generators = [
             'static' => StaticCodeGenerator::class,
@@ -77,6 +81,17 @@ class ClientsServiceProvider extends ServiceProvider
         }
 
         $this->app->singleton(CodeGeneratorInterface::class, $generators[$currentGenerator]);
+    }
+
+    private function registerAuthManager(): void
+    {
+        $this->app->singleton(AuthManagerInterface::class, function ($app) {
+            return new GuardAuthManager(
+                Auth::guard(AuthGuard::CLIENT->value),
+                Request::session(),
+                $app->make(Repository\ClientsRepositoryInterface::class),
+            );
+        });
     }
 
     public function boot()

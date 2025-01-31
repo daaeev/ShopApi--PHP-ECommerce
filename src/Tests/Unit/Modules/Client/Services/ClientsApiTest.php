@@ -8,30 +8,34 @@ use Project\Modules\Client\Api\DTO;
 use Project\Modules\Client\Api\ClientsApi;
 use Project\Common\Entity\Hydrator\Hydrator;
 use Project\Common\Repository\NotFoundException;
-use Project\Tests\Unit\Modules\Helpers\ContactsGenerator;
+use Project\Modules\Client\Auth\AuthManagerInterface;
+use Project\Tests\Unit\Modules\Helpers\ClientFactory;
 use Project\Modules\Client\Repository\ClientsRepositoryInterface;
 use Project\Common\ApplicationMessages\Buses\MessageBusInterface;
 use Project\Modules\Client\Repository\QueryClientsRepositoryInterface;
 
 class ClientsApiTest extends TestCase
 {
-    use ContactsGenerator;
+    use ClientFactory;
 
     private readonly ClientsRepositoryInterface $clients;
     private readonly QueryClientsRepositoryInterface $queryClients;
+    private readonly AuthManagerInterface $authManager;
     private readonly MessageBusInterface $eventBus;
     private readonly ClientsApi $api;
 
     private readonly Hydrator $hydrator;
     private readonly int $clientId;
     private readonly DTO\Client $clientDTO;
+    private readonly Entity\Client $clientEntity;
 
     protected function setUp(): void
     {
         $this->clients = $this->getMockBuilder(ClientsRepositoryInterface::class)->getMock();
         $this->queryClients = $this->getMockBuilder(QueryClientsRepositoryInterface::class)->getMock();
+        $this->authManager = $this->getMockBuilder(AuthManagerInterface::class)->getMock();
         $this->eventBus = $this->getMockBuilder(MessageBusInterface::class)->getMock();
-        $this->api = new ClientsApi($this->clients, $this->queryClients);
+        $this->api = new ClientsApi($this->clients, $this->queryClients, $this->authManager);
         $this->api->setDispatcher($this->eventBus);
 
         $this->hydrator = new Hydrator;
@@ -39,6 +43,30 @@ class ClientsApiTest extends TestCase
         $this->clientDTO = $this->getMockBuilder(DTO\Client::class)
             ->disableOriginalConstructor()
             ->getMock();
+
+        $this->clientEntity = $this->generateClient();
+    }
+
+    public function testGet()
+    {
+        $this->queryClients->expects($this->once())
+            ->method('get')
+            ->with($id = random_int(1, 10))
+            ->willReturn($this->clientDTO);
+
+        $client = $this->api->get($id);
+        $this->assertSame($client, $this->clientDTO);
+    }
+
+    public function testGetIfDoesNotExists()
+    {
+        $this->queryClients->expects($this->once())
+            ->method('get')
+            ->with($id = random_int(1, 10))
+            ->willThrowException(new NotFoundException);
+
+        $this->expectException(NotFoundException::class);
+        $this->api->get($id);
     }
 
     public function testGetByPhone()
@@ -59,6 +87,34 @@ class ClientsApiTest extends TestCase
             ->willThrowException(new NotFoundException);
 
         $client = $this->api->getByPhone($this->generatePhone());
+        $this->assertNull($client);
+    }
+
+    public function testGetAuthenticated()
+    {
+        $this->authManager->expects($this->once())
+            ->method('logged')
+            ->willReturn($this->clientEntity);
+
+        $client = $this->api->getAuthenticated();
+        $this->assertSame($client->id, $this->clientEntity->getId()->getId());
+        $this->assertSame($client->firstName, $this->clientEntity->getName()->getFirstName());
+        $this->assertSame($client->lastName, $this->clientEntity->getName()->getLastName());
+        $this->assertSame($client->phone, $this->clientEntity->getContacts()->getPhone());
+        $this->assertSame($client->email, $this->clientEntity->getContacts()->getEmail());
+        $this->assertSame($client->phoneConfirmed, $this->clientEntity->getContacts()->isPhoneConfirmed());
+        $this->assertSame($client->emailConfirmed, $this->clientEntity->getContacts()->isEmailConfirmed());
+        $this->assertSame($client->createdAt, $this->clientEntity->getCreatedAt());
+        $this->assertSame($client->updatedAt, $this->clientEntity->getUpdatedAt());
+    }
+
+    public function testGetAuthenticatedIfUnauthenticated()
+    {
+        $this->authManager->expects($this->once())
+            ->method('logged')
+            ->willReturn(null);
+
+        $client = $this->api->getAuthenticated();
         $this->assertNull($client);
     }
 

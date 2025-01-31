@@ -18,7 +18,6 @@ class Handler extends ExceptionHandler
         'password_confirmation',
     ];
 
-
     public function render($request, \Throwable $e)
     {
         if ($request->is('api/*') || $request->wantsJson()) {
@@ -73,7 +72,11 @@ class Handler extends ExceptionHandler
 
     protected function addDetails(\Throwable $e, array &$response): void
     {
-        if (App::isProduction() || !config('app.debug')) {
+        if (App::isProduction()) {
+            return;
+        }
+
+        if (false === config('app.debug')) {
             return;
         }
 

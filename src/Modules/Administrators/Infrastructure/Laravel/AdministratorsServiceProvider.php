@@ -4,6 +4,7 @@ namespace Project\Modules\Administrators\Infrastructure\Laravel;
 
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Request;
 use Project\Modules\Administrators\Queries;
 use Project\Modules\Administrators\Commands;
 use Project\Infrastructure\Laravel\Auth\AuthGuard;
@@ -42,6 +43,7 @@ class AdministratorsServiceProvider extends ServiceProvider
         $this->app->singleton(GuardAuthManager::class, function ($app) {
             return new GuardAuthManager(
                 Auth::guard(AuthGuard::ADMIN->value),
+                Request::session(),
                 $app->make(AdminsRepositoryInterface::class),
             );
         });

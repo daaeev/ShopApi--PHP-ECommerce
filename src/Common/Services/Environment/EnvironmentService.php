@@ -3,6 +3,7 @@
 namespace Project\Common\Services\Environment;
 
 use Illuminate\Support\Facades\App;
+use Project\Modules\Client\Api\ClientsApi;
 use Project\Modules\Administrators\Api\AdministratorsApi;
 use Project\Common\Services\Cookie\CookieManagerInterface;
 
@@ -11,12 +12,13 @@ class EnvironmentService implements EnvironmentInterface
     public function __construct(
         private CookieManagerInterface $cookie,
         private AdministratorsApi $administrators,
+        private ClientsApi $clients,
         private string $hashCookieName = 'clientHash',
     ) {}
 
     public function getClient(): Client
     {
-        return new Client($this->getClientHashCookie(), $this->getAuthorizedClientId());
+        return new Client($this->getClientHashCookie(), $this->getAuthenticatedClientId());
     }
 
     private function getClientHashCookie(): string
@@ -28,9 +30,9 @@ class EnvironmentService implements EnvironmentInterface
         return $hash;
     }
 
-    private function getAuthorizedClientId(): ?int
+    private function getAuthenticatedClientId(): ?int
     {
-        return null; // TODO: Not implemented yet
+        return $this->clients->getAuthenticated()?->id;
     }
 
     public function getAdministrator(): ?Administrator

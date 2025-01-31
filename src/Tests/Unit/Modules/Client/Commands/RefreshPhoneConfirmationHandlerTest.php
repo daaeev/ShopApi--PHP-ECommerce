@@ -6,13 +6,13 @@ use PHPUnit\Framework\TestCase;
 use Project\Modules\Client\Entity\Client;
 use Project\Modules\Client\Auth\AuthManagerInterface;
 use Project\Modules\Client\Api\Events\AbstractClientEvent;
-use Project\Modules\Client\Commands\RefreshConfirmationCommand;
+use Project\Modules\Client\Commands\RefreshPhoneConfirmationCommand;
 use Project\Modules\Client\Entity\Confirmation\ConfirmationUuid;
 use Project\Modules\Client\Repository\ClientsRepositoryInterface;
 use Project\Common\ApplicationMessages\Buses\MessageBusInterface;
-use Project\Modules\Client\Commands\Handlers\RefreshConfirmationHandler;
+use Project\Modules\Client\Commands\Handlers\RefreshPhoneConfirmationHandler;
 
-class RefreshConfirmationHandlerTest extends TestCase
+class RefreshPhoneConfirmationHandlerTest extends TestCase
 {
     private readonly ClientsRepositoryInterface $clients;
     private readonly AuthManagerInterface $auth;
@@ -21,7 +21,7 @@ class RefreshConfirmationHandlerTest extends TestCase
     private readonly AbstractClientEvent $event;
     private readonly MessageBusInterface $eventBus;
 
-    private readonly RefreshConfirmationCommand $command;
+    private readonly RefreshPhoneConfirmationCommand $command;
 
     protected function setUp(): void
     {
@@ -37,7 +37,7 @@ class RefreshConfirmationHandlerTest extends TestCase
             ->getMock();
 
         $this->eventBus = $this->getMockBuilder(MessageBusInterface::class)->getMock();
-        $this->command = new RefreshConfirmationCommand($this->confirmationUuid->getId());
+        $this->command = new RefreshPhoneConfirmationCommand($this->confirmationUuid->getId());
     }
 
     public function testRefreshClientConfirmation()
@@ -67,7 +67,7 @@ class RefreshConfirmationHandlerTest extends TestCase
             ->method('dispatch')
             ->with($this->event);
 
-        $handler = new RefreshConfirmationHandler($this->auth, $this->clients);
+        $handler = new RefreshPhoneConfirmationHandler($this->auth, $this->clients);
         $handler->setDispatcher($this->eventBus);
         call_user_func($handler, $this->command);
     }
@@ -78,7 +78,7 @@ class RefreshConfirmationHandlerTest extends TestCase
             ->method('logged')
             ->willReturn($this->client);
 
-        $handler = new RefreshConfirmationHandler($this->auth, $this->clients);
+        $handler = new RefreshPhoneConfirmationHandler($this->auth, $this->clients);
         $handler->setDispatcher($this->eventBus);
 
         $this->expectException(\DomainException::class);

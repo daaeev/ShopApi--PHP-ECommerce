@@ -4,6 +4,7 @@ namespace Laravel\Modules\Client\Auth;
 
 use Project\Tests\Laravel\TestCase;
 use Project\Modules\Client\Entity\Client;
+use Illuminate\Contracts\Session\Session;
 use Project\Modules\Client\Entity\ClientId;
 use Illuminate\Contracts\Auth\StatefulGuard;
 use Project\Common\Repository\NotFoundException;
@@ -17,6 +18,7 @@ class GuardAuthManagerTest extends TestCase
     use ContactsGenerator;
 
     private readonly StatefulGuard $guard;
+    private readonly Session $session;
     private readonly ClientsRepositoryInterface $clients;
     private readonly Client $client;
     private readonly ClientId $clientId;
@@ -26,6 +28,7 @@ class GuardAuthManagerTest extends TestCase
     {
         parent::setUp();
         $this->guard = $this->getMockBuilder(StatefulGuard::class)->getMock();
+        $this->session = $this->getMockBuilder(Session::class)->getMock();
         $this->clients = $this->getMockBuilder(ClientsRepositoryInterface::class)->getMock();
         $this->client = $this->getMockBuilder(Client::class)
             ->disableOriginalConstructor()
@@ -35,7 +38,7 @@ class GuardAuthManagerTest extends TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
-        $this->authManager = new GuardAuthManager($this->guard, $this->clients);
+        $this->authManager = new GuardAuthManager($this->guard, $this->session, $this->clients);
     }
 
     public function testAuthorize()
@@ -98,7 +101,15 @@ class GuardAuthManagerTest extends TestCase
             ->method('check')
             ->willReturn(true);
 
-        $this->guard->expects($this->once())->method('logout');
+        $this->guard->expects($this->once())
+            ->method('logout');
+
+        $this->session->expects($this->once())
+            ->method('invalidate');
+
+        $this->session->expects($this->once())
+            ->method('regenerateToken');
+
         $this->authManager->logout();
     }
 

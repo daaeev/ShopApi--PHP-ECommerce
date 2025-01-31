@@ -9,13 +9,13 @@ use Project\Modules\Client\Auth\AuthManagerInterface;
 use Project\Tests\Unit\Modules\Helpers\ContactsGenerator;
 use Project\Modules\Client\Api\Events\AbstractClientEvent;
 use Project\Modules\Client\Entity\Confirmation\ConfirmationUuid;
-use Project\Modules\Client\Commands\GenerateConfirmationCommand;
+use Project\Modules\Client\Commands\GeneratePhoneConfirmationCommand;
 use Project\Modules\Client\Repository\ClientsRepositoryInterface;
 use Project\Common\ApplicationMessages\Buses\MessageBusInterface;
 use Project\Modules\Client\Entity\Confirmation\CodeGeneratorInterface;
-use Project\Modules\Client\Commands\Handlers\GenerateConfirmationHandler;
+use Project\Modules\Client\Commands\Handlers\GeneratePhoneConfirmationHandler;
 
-class GenerateConfirmationHandlerTest extends TestCase
+class GeneratePhoneConfirmationHandlerTest extends TestCase
 {
     use ContactsGenerator;
 
@@ -27,7 +27,7 @@ class GenerateConfirmationHandlerTest extends TestCase
     private readonly AbstractClientEvent $event;
     private readonly MessageBusInterface $eventBus;
 
-    private readonly GenerateConfirmationCommand $command;
+    private readonly GeneratePhoneConfirmationCommand $command;
 
     protected function setUp(): void
     {
@@ -48,7 +48,7 @@ class GenerateConfirmationHandlerTest extends TestCase
             ->getMock();
 
         $this->eventBus = $this->getMockBuilder(MessageBusInterface::class)->getMock();
-        $this->command = new GenerateConfirmationCommand($this->generatePhone());
+        $this->command = new GeneratePhoneConfirmationCommand($this->generatePhone());
     }
 
     public function testGenerateClientConfirmation()
@@ -79,7 +79,7 @@ class GenerateConfirmationHandlerTest extends TestCase
             ->method('dispatch')
             ->with($this->event);
 
-        $handler = new GenerateConfirmationHandler($this->auth, $this->clients, $this->codeGenerator);
+        $handler = new GeneratePhoneConfirmationHandler($this->auth, $this->clients, $this->codeGenerator);
         $handler->setDispatcher($this->eventBus);
         $uuid = call_user_func($handler, $this->command);
         $this->assertSame($this->confirmationUuid->getId(), $uuid);
@@ -91,7 +91,7 @@ class GenerateConfirmationHandlerTest extends TestCase
             ->method('logged')
             ->willReturn($this->client);
 
-        $handler = new GenerateConfirmationHandler($this->auth, $this->clients, $this->codeGenerator);
+        $handler = new GeneratePhoneConfirmationHandler($this->auth, $this->clients, $this->codeGenerator);
         $handler->setDispatcher($this->eventBus);
 
         $this->expectException(\DomainException::class);

@@ -18,7 +18,7 @@ return [
     */
 
     'defaults' => [
-        'guard' => AuthGuard::ADMIN->value
+        'guard' => AuthGuard::CLIENT->value
     ],
 
     /*

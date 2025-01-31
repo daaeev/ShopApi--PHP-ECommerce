@@ -4,17 +4,25 @@ namespace Project\Tests\Unit\Services\Environment;
 
 use Illuminate\Support\Facades\App;
 use Project\Common\Administrators\Role;
+use Project\Modules\Client\Api\ClientsApi;
 use Project\Common\Services\Environment\Language;
 use Project\Modules\Administrators\Api\DTO\Admin;
+use Project\Tests\Unit\Modules\Helpers\ClientFactory;
+use Project\Modules\Client\Api\DTO\Client as ClientDTO;
 use Project\Modules\Administrators\Api\AdministratorsApi;
 use Project\Common\Services\Cookie\CookieManagerInterface;
 use Project\Common\Services\Environment\EnvironmentService;
+use Project\Modules\Client\Utils\ClientEntity2DTOConverter;
 use Project\Common\Services\Environment\EnvironmentInterface;
 
 class EnvironmentServiceTest extends \PHPUnit\Framework\TestCase
 {
+    use ClientFactory;
+
     private readonly CookieManagerInterface $cookie;
     private readonly AdministratorsApi $administrators;
+    private readonly ClientsApi $clients;
+    private readonly ClientDTO $clientDTO;
     private readonly EnvironmentInterface $environment;
 
     private readonly string $hashCookieName;
@@ -27,24 +35,51 @@ class EnvironmentServiceTest extends \PHPUnit\Framework\TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
+        $this->clients = $this->getMockBuilder(ClientsApi::class)
+            ->disableOriginalConstructor()
+            ->getMock();
+
+        $this->clientDTO = ClientEntity2DTOConverter::convert($this->generateClient());
+
         $this->hashCookieName = uniqid();
         $this->hash = uniqid();
         $this->environment = new EnvironmentService(
             $this->cookie,
             $this->administrators,
+            $this->clients,
             $this->hashCookieName
         );
     }
 
-    public function testGetClient()
+    public function testGetUnauthenticatedClient()
     {
         $this->cookie->expects($this->once())
             ->method('get')
             ->with($this->hashCookieName)
             ->willReturn($this->hash);
 
+        $this->clients->expects($this->once())
+            ->method('getAuthenticated')
+            ->willReturn(null);
+
         $client = $this->environment->getClient();
         $this->assertNull($client->getId());
+        $this->assertSame($this->hash, $client->getHash());
+    }
+
+    public function testGetAuthenticatedClient()
+    {
+        $this->cookie->expects($this->once())
+            ->method('get')
+            ->with($this->hashCookieName)
+            ->willReturn($this->hash);
+
+        $this->clients->expects($this->once())
+            ->method('getAuthenticated')
+            ->willReturn($this->clientDTO);
+
+        $client = $this->environment->getClient();
+        $this->assertSame($this->clientDTO->id, $client->getId());
         $this->assertSame($this->hash, $client->getHash());
     }
 
@@ -54,6 +89,9 @@ class EnvironmentServiceTest extends \PHPUnit\Framework\TestCase
             ->method('get')
             ->with($this->hashCookieName)
             ->willReturn(null);
+
+        $this->clients->expects($this->never())
+            ->method('getAuthenticated');
 
         $this->expectException(\DomainException::class);
         $this->environment->getClient();

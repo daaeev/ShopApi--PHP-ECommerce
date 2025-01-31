@@ -4,6 +4,7 @@ namespace Project\Modules\Client\Api;
 
 use Project\Modules\Client\Entity;
 use Project\Common\Repository\NotFoundException;
+use Project\Modules\Client\Auth\AuthManagerInterface;
 use Project\Modules\Client\Utils\ClientEntity2DTOConverter;
 use Project\Modules\Client\Repository\ClientsRepositoryInterface;
 use Project\Common\ApplicationMessages\Events\DispatchEventsTrait;
@@ -17,6 +18,7 @@ class ClientsApi implements DispatchEventsInterface
     public function __construct(
         private ClientsRepositoryInterface $clients,
         private QueryClientsRepositoryInterface $queryClients,
+        private AuthManagerInterface $authManager,
     ) {}
 
     public function get(int|string $id): DTO\Client
@@ -31,6 +33,16 @@ class ClientsApi implements DispatchEventsInterface
         } catch (NotFoundException) {
             return null;
         }
+    }
+
+    public function getAuthenticated(): ?DTO\Client
+    {
+        $authenticated = $this->authManager->logged();
+        if (null === $authenticated) {
+            return null;
+        }
+
+        return ClientEntity2DTOConverter::convert($authenticated);
     }
 
     public function create(

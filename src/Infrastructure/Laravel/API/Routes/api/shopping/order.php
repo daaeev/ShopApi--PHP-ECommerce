@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Project\Common\Administrators\Role;
+use Project\Infrastructure\Laravel\Auth\AuthGuard;
 use Project\Infrastructure\Laravel\API\Controllers\Orders\OrdersAdminController;
 use Project\Infrastructure\Laravel\API\Controllers\Orders\OrdersClientController;
 
@@ -10,7 +11,7 @@ Route::group(['prefix' => 'orders'], function () {
     Route::get('/{id}', [OrdersClientController::class, 'get']);
 });
 
-Route::middleware(['auth:admin', 'hasAccess:' . Role::MANAGER->value])
+Route::middleware(['auth:' . AuthGuard::ADMIN->value, 'hasAccess:' . Role::MANAGER->value])
     ->prefix('admin/orders')
     ->group(function () {
         Route::get('{id}', [OrdersAdminController::class, 'get']);
