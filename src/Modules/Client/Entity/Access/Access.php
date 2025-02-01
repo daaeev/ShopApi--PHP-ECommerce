@@ -4,8 +4,8 @@ namespace Project\Modules\Client\Entity\Access;
 
 abstract class Access
 {
-    private readonly AccessType $type;
-    private readonly \DateTimeImmutable $createdAt;
+    protected AccessType $type;
+    protected \DateTimeImmutable $createdAt;
 
     public function __construct(AccessType $type)
     {

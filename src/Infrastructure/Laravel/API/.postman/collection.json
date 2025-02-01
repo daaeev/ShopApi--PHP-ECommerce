@@ -42,57 +42,586 @@
 			"name": "Auth",
 			"item": [
 				{
-					"name": "admin/login",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"body": {
-							"mode": "formdata",
-							"formdata": [
-								{
-									"key": "login",
-									"value": "{{adminLogin}}",
-									"type": "text"
+					"name": "Client",
+					"item": [
+						{
+							"name": "clients/confirmation",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "phone",
+											"value": "+380501111111",
+											"type": "text"
+										}
+									]
 								},
+								"url": {
+									"raw": "{{domain}}/api/clients/confirmation",
+									"host": [
+										"{{domain}}"
+									],
+									"path": [
+										"api",
+										"clients",
+										"confirmation"
+									]
+								}
+							},
+							"response": [
 								{
-									"key": "password",
-									"value": "{{adminPassword}}",
-									"type": "text"
+									"name": "Example: Generate phone confirmation",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "phone",
+													"value": "+380501111111",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{domain}}/api/clients/confirmation",
+											"host": [
+												"{{domain}}"
+											],
+											"path": [
+												"api",
+												"clients",
+												"confirmation"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Server",
+											"value": "nginx/1.27.2"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Transfer-Encoding",
+											"value": "chunked"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "X-Powered-By",
+											"value": "PHP/8.1.31"
+										},
+										{
+											"key": "Cache-Control",
+											"value": "no-cache, private"
+										},
+										{
+											"key": "Date",
+											"value": "Sat, 01 Feb 2025 10:02:57 GMT"
+										},
+										{
+											"key": "X-RateLimit-Limit",
+											"value": "10"
+										},
+										{
+											"key": "X-RateLimit-Remaining",
+											"value": "9"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "*"
+										},
+										{
+											"key": "Set-Cookie",
+											"value": "XSRF-TOKEN=eyJpdiI6IlpSVnF3dFk1M016aW1WU3dqR2JUeWc9PSIsInZhbHVlIjoiUXY2NVpjblcvR1dqcktSQ3M2ZkU4WWIxZDZQRjFkOEpjbGpSdU94V0Z4OEFWYSs4WDArNEo2UXhhQ3k1T0NuMUhxOGhXdkRFMmdJaTVBbTNvMm5EaHRMWHdIbDBYSWFSUFp5bVoyYnNPNzA3TEZ1YkpCWlBDdkFYRENVN0toaXIiLCJtYWMiOiJmMDY5MTRhMDE0MzM3NDNjYjIyODEzYjVhNmExNjcxYmFjZTRkZWExMGM3NDI0YTBmZmM0MGRjNmQ5M2E4NWExIiwidGFnIjoiIn0%3D; expires=Sat, 01 Feb 2025 12:02:57 GMT; Max-Age=7200; path=/; samesite=lax"
+										},
+										{
+											"key": "Set-Cookie",
+											"value": "laravel_session=eyJpdiI6Im9ONFYvbUp6WnFwMURFdmxZVzNzeUE9PSIsInZhbHVlIjoibEhsZlBWY1podFJncnE3MVlYVVZTVGIrN0wrUFdLZTJJKzgrOVlQc3B0MWlHVFQ4TWtzNmZwSm1oWDBsaXZwTG93SG1QdUZOUlgrNGVBb2kvRTJCdThwWmZDTDNlQkp5aEpjY2VQZ0VnVjV0WXg2Q1FuR2E1TFFEdDNZTkNsaHAiLCJtYWMiOiIwNDJjZDI2ZTEwZWEwMTE1NWFhMTRmYTc1YzBjMjIyYTc0NGZhM2IyYmI0ZmQwMDU3OWQwMDVkOTAyZDQyZGNkIiwidGFnIjoiIn0%3D; expires=Sat, 01 Feb 2025 12:02:57 GMT; Max-Age=7200; path=/; httponly; samesite=lax"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": 200,\n    \"message\": \"Confirmation generated\",\n    \"dataset\": {\n        \"uuid\": \"f88601b6-8863-47d9-9d83-43bc9c018514\"\n    }\n}"
 								}
 							]
 						},
-						"url": {
-							"raw": "{{domain}}/api/admin/login",
-							"host": [
-								"{{domain}}"
-							],
-							"path": [
-								"api",
-								"admin",
-								"login"
+						{
+							"name": "clients/confirmation/refresh",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "confirmationUuid",
+											"value": "0f495fe2-23e9-45a4-83ed-cdace88be2ae",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{domain}}/api/clients/confirmation/refresh",
+									"host": [
+										"{{domain}}"
+									],
+									"path": [
+										"api",
+										"clients",
+										"confirmation",
+										"refresh"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Example: Refresh confirmation expired at",
+									"originalRequest": {
+										"method": "PATCH",
+										"header": [],
+										"body": {
+											"mode": "urlencoded",
+											"urlencoded": [
+												{
+													"key": "confirmationUuid",
+													"value": "0f495fe2-23e9-45a4-83ed-cdace88be2ae",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{domain}}/api/clients/confirmation/refresh",
+											"host": [
+												"{{domain}}"
+											],
+											"path": [
+												"api",
+												"clients",
+												"confirmation",
+												"refresh"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Server",
+											"value": "nginx/1.27.2"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Transfer-Encoding",
+											"value": "chunked"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "X-Powered-By",
+											"value": "PHP/8.1.31"
+										},
+										{
+											"key": "Cache-Control",
+											"value": "no-cache, private"
+										},
+										{
+											"key": "Date",
+											"value": "Sat, 01 Feb 2025 11:46:20 GMT"
+										},
+										{
+											"key": "X-RateLimit-Limit",
+											"value": "3"
+										},
+										{
+											"key": "X-RateLimit-Remaining",
+											"value": "2"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "*"
+										},
+										{
+											"key": "Set-Cookie",
+											"value": "XSRF-TOKEN=eyJpdiI6IkhQZENVUHVEYXcrNk1xdmFNSitMbVE9PSIsInZhbHVlIjoiM1RPTkpSekoyOU1pWTB6b3kzbmdoaEsyNkZXaXJ5REw0VXZMWVd4OWNwaVJ0bTZOZWNwT2ZXY0pZaUVVeG5wcWFMUzN4dE9FK0JURlVrQVUwQWltcEhTd2N6NWlVdUxnaGdFU05YejhMeW00WWN5K2pFaEFDWld3d0pCR3BZRHUiLCJtYWMiOiIyOGMzNzg3MGJlNjVkYjlhMDliNjVjOTY5ZTJlZjU4YjI1MGQwZjQ2MzIwNzY3NjIwMjkxYjNmZmU2MzRiZGM5IiwidGFnIjoiIn0%3D; expires=Sat, 01 Feb 2025 13:46:20 GMT; Max-Age=7200; path=/; samesite=lax"
+										},
+										{
+											"key": "Set-Cookie",
+											"value": "laravel_session=eyJpdiI6Ik4xT09yTnhpRUFpL2dUYjRpeWwxY1E9PSIsInZhbHVlIjoibm0zckNCb2x3dStjMTM3dGE3aUNXeTd1dzJqd1NDTWJBQmVkZTQrM2RlenhtbjhaNTFNNlBESW1rTVdOZUFnelFPWFlpL2JqcXhNOGNKbkpCYk5kUUMyRzdCSUF3MVVBMFNjZXE5MkdLQ0RLdVJ1SFYzWUJnYTVDVWRUbUZ0NE8iLCJtYWMiOiJjMGY4NWM0OTM4NTdmNzI1NDE2ZmVmMjZlMThhYjA0Mjk0ZjkzNWI3ZTc5ZjY5MjhiYmY0ZDdmY2U1YWMzNWVhIiwidGFnIjoiIn0%3D; expires=Sat, 01 Feb 2025 13:46:20 GMT; Max-Age=7200; path=/; httponly; samesite=lax"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": 200,\n    \"message\": \"Confirmation expired at refreshed\",\n    \"dataset\": null\n}"
+								}
+							]
+						},
+						{
+							"name": "clients/login",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "confirmationUuid",
+											"value": "f88601b6-8863-47d9-9d83-43bc9c018514",
+											"type": "text"
+										},
+										{
+											"key": "code",
+											"value": "3225",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{domain}}/api/clients/login",
+									"host": [
+										"{{domain}}"
+									],
+									"path": [
+										"api",
+										"clients",
+										"login"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Example: Success login",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"body": {
+											"mode": "formdata",
+											"formdata": [
+												{
+													"key": "confirmationUuid",
+													"value": "f88601b6-8863-47d9-9d83-43bc9c018514",
+													"type": "text"
+												},
+												{
+													"key": "code",
+													"value": "3225",
+													"type": "text"
+												}
+											]
+										},
+										"url": {
+											"raw": "{{domain}}/api/clients/login",
+											"host": [
+												"{{domain}}"
+											],
+											"path": [
+												"api",
+												"clients",
+												"login"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Server",
+											"value": "nginx/1.27.2"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Transfer-Encoding",
+											"value": "chunked"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "X-Powered-By",
+											"value": "PHP/8.1.31"
+										},
+										{
+											"key": "Cache-Control",
+											"value": "no-cache, private"
+										},
+										{
+											"key": "Date",
+											"value": "Sat, 01 Feb 2025 10:06:23 GMT"
+										},
+										{
+											"key": "X-RateLimit-Limit",
+											"value": "10"
+										},
+										{
+											"key": "X-RateLimit-Remaining",
+											"value": "8"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "*"
+										},
+										{
+											"key": "Set-Cookie",
+											"value": "XSRF-TOKEN=eyJpdiI6InBZaWtDU0FKaXQwYksxaTV0Rys1eUE9PSIsInZhbHVlIjoiNUw5d2I2bzFZU05VWG1RemJxa1hHZUJXdUhLRlVlR1BUeFhVMVBydjFLeURHR3hkVFEwWkJ5SUNBMURObitnM3RBcWtkMmlJSXBrN2E1VXc4a1F2YmplM0VlQmxhVDA2SUQvYU5LaHJKVEpRL1pnQndyMm1jUTh3bENLNnhwSXAiLCJtYWMiOiI3ZmQwMTI1NTEyYzc5ZjExMzcxMDM1MjNmOTJjMTkwMDk4NWJjMGRlZDRlYjlhODAwZmRlZDA0ZGY2ZGQ3M2MzIiwidGFnIjoiIn0%3D; expires=Sat, 01 Feb 2025 12:06:23 GMT; Max-Age=7200; path=/; samesite=lax"
+										},
+										{
+											"key": "Set-Cookie",
+											"value": "laravel_session=eyJpdiI6InJ1QW9wRlI1TVVPRjMvNnhzMkJPUGc9PSIsInZhbHVlIjoidk82MVVaQzZ2YnI4ZVNGRG9nbEZ3Y29MeVZUZXppb2MxSEs1cWJaNUVHWWVBYTJnLzBlWkxsRGx0ZlBQWC85N2t4UGppOXBYeSs3SXFWSVo0dzlwR20xZzU4MnYwalRzVlFvL2t4ZTc2VCtTRjlLNGZOcVZOUnFxVmwvMVVnMUQiLCJtYWMiOiI5MDkxODk5YjQ3MzI3YzVkNWE1NTU0ZDRkYmYzMzcyMjA3YThjZjBhNDQ3M2QxODMyY2FlNGVmYmM3NzkxMTk0IiwidGFnIjoiIn0%3D; expires=Sat, 01 Feb 2025 12:06:23 GMT; Max-Age=7200; path=/; httponly; samesite=lax"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": 200,\n    \"message\": \"Phone confirmed! You are authenticated\",\n    \"dataset\": null\n}"
+								}
+							]
+						},
+						{
+							"name": "clients/logout",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{domain}}/api/clients/logout",
+									"host": [
+										"{{domain}}"
+									],
+									"path": [
+										"api",
+										"clients",
+										"logout"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Example: Logout",
+									"originalRequest": {
+										"method": "POST",
+										"header": [],
+										"url": {
+											"raw": "{{domain}}/api/clients/logout",
+											"host": [
+												"{{domain}}"
+											],
+											"path": [
+												"api",
+												"clients",
+												"logout"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Server",
+											"value": "nginx/1.27.2"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Transfer-Encoding",
+											"value": "chunked"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "X-Powered-By",
+											"value": "PHP/8.1.31"
+										},
+										{
+											"key": "Cache-Control",
+											"value": "no-cache, private"
+										},
+										{
+											"key": "Date",
+											"value": "Sat, 01 Feb 2025 11:45:37 GMT"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "*"
+										},
+										{
+											"key": "Set-Cookie",
+											"value": "XSRF-TOKEN=eyJpdiI6Im05dCtvQ3FCaWdNOFlDQjJNcDNSWkE9PSIsInZhbHVlIjoidnVDUGp3L3VTNkdRYmVuMEkwTTZJQTdsQkJCZHdYUjJFbmRlSXBja3BCSkpHQVM0MGtGNm1vUVJBSm02THdFb3phTHZxa0pGN1dTcFdCNHNIbks4bkozdmdLVVQrN244TXZqSzRQbitjTmdZTVNxWngxdHNjSEU2dVpuTnloeUMiLCJtYWMiOiI2N2JiZjdhNjRhZWY4YmI2N2I1NDQ0ODIzOTExODEyYTQwZmQ0OWY4MDFmZmE1ZTFmODYxMzMyNTkyZGE2Y2IwIiwidGFnIjoiIn0%3D; expires=Sat, 01 Feb 2025 13:45:37 GMT; Max-Age=7200; path=/; samesite=lax"
+										},
+										{
+											"key": "Set-Cookie",
+											"value": "laravel_session=eyJpdiI6Ikk2ZTF1bUFrK1ZYdlkybENJQTZ0aWc9PSIsInZhbHVlIjoiV0dMbHFzMGYwZ21SaGU0SGlCeERXM0NrMEZ0RUdTVlYxRWx4SzZ2TGhKY1M2QzJERDNsejBVTmdYdDgxNXFyT2Y4cVN5SWJpT0NzOWZuQjdtQ285c2Q2OStrVldYTFV5U3QyTHhRYjRhckdyZzhGeHVLdktNVFNXYVpGRzhuTEQiLCJtYWMiOiIwNjNlNWZkN2JjZDVkZTM2NTc3MGNjZTNlZGZlN2VmNjk3NjM2MzQ0MTg2MmY4YjFhODZjMTNhNjQzNGIyMGQ1IiwidGFnIjoiIn0%3D; expires=Sat, 01 Feb 2025 13:45:37 GMT; Max-Age=7200; path=/; httponly; samesite=lax"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": 200,\n    \"message\": \"Bye!\",\n    \"dataset\": null\n}"
+								}
+							]
+						},
+						{
+							"name": "clients",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{domain}}/api/clients",
+									"host": [
+										"{{domain}}"
+									],
+									"path": [
+										"api",
+										"clients"
+									]
+								}
+							},
+							"response": [
+								{
+									"name": "Example: Get authenticated client",
+									"originalRequest": {
+										"method": "GET",
+										"header": [],
+										"url": {
+											"raw": "{{domain}}/api/clients",
+											"host": [
+												"{{domain}}"
+											],
+											"path": [
+												"api",
+												"clients"
+											]
+										}
+									},
+									"status": "OK",
+									"code": 200,
+									"_postman_previewlanguage": "json",
+									"header": [
+										{
+											"key": "Server",
+											"value": "nginx/1.27.2"
+										},
+										{
+											"key": "Content-Type",
+											"value": "application/json"
+										},
+										{
+											"key": "Transfer-Encoding",
+											"value": "chunked"
+										},
+										{
+											"key": "Connection",
+											"value": "keep-alive"
+										},
+										{
+											"key": "X-Powered-By",
+											"value": "PHP/8.1.31"
+										},
+										{
+											"key": "Cache-Control",
+											"value": "no-cache, private"
+										},
+										{
+											"key": "Date",
+											"value": "Sat, 01 Feb 2025 11:48:36 GMT"
+										},
+										{
+											"key": "Access-Control-Allow-Origin",
+											"value": "*"
+										},
+										{
+											"key": "Set-Cookie",
+											"value": "XSRF-TOKEN=eyJpdiI6IlpBZEVMbGkrWENMSW8yMExBYUNEUWc9PSIsInZhbHVlIjoiTGplamZraFBLSVA2dVF0S2FxWHY0Nkl6c2hNdmxxWHNNempJQURDckI3ekNFMjhhNlFQLzhzOFJSU3pRSUdVQVgyczV2aitkeDFEYUVKVDUxNGZKeStuQ1I5RGszbWZXQjBZVktkTkdkbW9HZVdCWDh0cE5CNjR5TWtUNnJxZngiLCJtYWMiOiJjZWMzNzAzYTExOWViM2RlZDViMDRmZmQzZDkxMDY2M2ExMTdiZDMwYmU3NDMzOTVlN2FkODIwZDg3YWIzYjdhIiwidGFnIjoiIn0%3D; expires=Sat, 01 Feb 2025 13:48:36 GMT; Max-Age=7200; path=/; samesite=lax"
+										},
+										{
+											"key": "Set-Cookie",
+											"value": "laravel_session=eyJpdiI6Imh3RUlxZmR1akwxK2NrcGRId0tXbFE9PSIsInZhbHVlIjoiZTNHWGFCZ2crRHNoYzl4bkhWVUNNa1ZNbnhybzN4UHJwRTBCQU54R0pqUmxQQk9lcXRNb3F2UWkxdUNvcmtpUno1K2s1aGRIcFZhWE5QbXUxelFhb25OdmZ5YTRPV2J6QldKcXZNM3J4UGdwS2sxbkp5NU4rRTlWQzc2WjNPNlUiLCJtYWMiOiJkYWNiZDA3ZmZiMDk4Mjk2MWNiOGNiNzE3MTFkNWI3NTA1MzY3YmY0YzA5NTMyNGYyNjdjOTVhNWEzMmIyYjdmIiwidGFnIjoiIn0%3D; expires=Sat, 01 Feb 2025 13:48:36 GMT; Max-Age=7200; path=/; httponly; samesite=lax"
+										}
+									],
+									"cookie": [],
+									"body": "{\n    \"status\": 200,\n    \"message\": \"Success\",\n    \"dataset\": {\n        \"id\": 1,\n        \"firstName\": null,\n        \"lastName\": null,\n        \"phone\": \"+380501111111\",\n        \"email\": null,\n        \"phoneConfirmed\": true,\n        \"emailConfirmed\": false,\n        \"createdAt\": \"2025-02-01T12:02:57+02:00\",\n        \"updatedAt\": null\n    }\n}"
+								}
 							]
 						}
-					},
-					"response": []
+					]
 				},
 				{
-					"name": "admin/logout",
-					"request": {
-						"method": "POST",
-						"header": [],
-						"url": {
-							"raw": "{{domain}}/api/admin/logout",
-							"host": [
-								"{{domain}}"
-							],
-							"path": [
-								"api",
-								"admin",
-								"logout"
-							]
+					"name": "Admin",
+					"item": [
+						{
+							"name": "admin/login",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "login",
+											"value": "{{adminLogin}}",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "{{adminPassword}}",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{domain}}/api/admin/login",
+									"host": [
+										"{{domain}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "admin/logout",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{domain}}/api/admin/logout",
+									"host": [
+										"{{domain}}"
+									],
+									"path": [
+										"api",
+										"admin",
+										"logout"
+									]
+								}
+							},
+							"response": []
 						}
-					},
-					"response": []
+					]
 				}
 			]
 		},

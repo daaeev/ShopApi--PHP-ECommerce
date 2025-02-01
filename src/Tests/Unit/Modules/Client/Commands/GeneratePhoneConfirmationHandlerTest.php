@@ -5,6 +5,8 @@ namespace Project\Tests\Unit\Modules\Client\Commands;
 use PHPUnit\Framework\TestCase;
 use Project\Modules\Client\Entity\Client;
 use Project\Modules\Client\Entity\Contacts;
+use Project\Common\Entity\Hydrator\Hydrator;
+use Project\Common\Repository\NotFoundException;
 use Project\Modules\Client\Auth\AuthManagerInterface;
 use Project\Tests\Unit\Modules\Helpers\ContactsGenerator;
 use Project\Modules\Client\Api\Events\AbstractClientEvent;
@@ -28,6 +30,7 @@ class GeneratePhoneConfirmationHandlerTest extends TestCase
     private readonly MessageBusInterface $eventBus;
 
     private readonly GeneratePhoneConfirmationCommand $command;
+    private readonly Hydrator $hydrator;
 
     protected function setUp(): void
     {
@@ -49,6 +52,7 @@ class GeneratePhoneConfirmationHandlerTest extends TestCase
 
         $this->eventBus = $this->getMockBuilder(MessageBusInterface::class)->getMock();
         $this->command = new GeneratePhoneConfirmationCommand($this->generatePhone());
+        $this->hydrator = new Hydrator;
     }
 
     public function testGenerateClientConfirmation()
@@ -83,6 +87,46 @@ class GeneratePhoneConfirmationHandlerTest extends TestCase
         $handler->setDispatcher($this->eventBus);
         $uuid = call_user_func($handler, $this->command);
         $this->assertSame($this->confirmationUuid->getId(), $uuid);
+    }
+
+    public function testGenerateClientConfirmationIfClientWithPhoneDoesNotExists()
+    {
+        $this->auth->expects($this->once())
+            ->method('logged')
+            ->willReturn(null);
+
+        $this->clients->expects($this->once())
+            ->method('getByPhone')
+            ->with($this->command->phone)
+            ->willThrowException(new NotFoundException);
+
+        $this->clients->expects($this->once())
+            ->method('add')
+            ->with($this->callback(function (Client $client) {
+                $this->assertNull($client->getId()->getId());
+                $this->assertSame($client->getContacts()->getPhone(), $this->command->phone);
+                $this->assertEmpty($client->getConfirmations());
+                $this->assertNull($client->getUpdatedAt());
+                $this->hydrator->hydrate($client->getId(), ['id' => random_int(1, 10)]);
+                return true;
+            }));
+
+        $this->clients->expects($this->once())
+            ->method('update')
+            ->with($this->callback(function (Client $client) {
+                $this->assertNotNull($client->getId()->getId());
+                $this->assertSame($client->getContacts()->getPhone(), $this->command->phone);
+                $this->assertCount(1, $client->getConfirmations());
+                return true;
+            }));
+
+        $this->eventBus->expects($this->exactly(2)) // Customer created, confirmation generated
+            ->method('dispatch');
+
+        $handler = new GeneratePhoneConfirmationHandler($this->auth, $this->clients, $this->codeGenerator);
+        $handler->setDispatcher($this->eventBus);
+        $uuid = call_user_func($handler, $this->command);
+        $this->assertNotEmpty($uuid);
     }
 
     public function testGenerateClientConfirmationIfClientAlreadyAuthorized()

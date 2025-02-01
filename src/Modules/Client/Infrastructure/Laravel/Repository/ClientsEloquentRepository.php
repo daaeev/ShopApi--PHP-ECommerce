@@ -170,16 +170,18 @@ class ClientsEloquentRepository implements ClientsRepositoryInterface
         return array_map(function (Eloquent\Access $access) {
             if (Entity\Access\AccessType::PHONE === $access->type) {
                 return $this->hydrator->hydrate(Entity\Access\PhoneAccess::class, [
-                    'phone' => $access->credentials['phone'],
+                    'type' => Entity\Access\AccessType::PHONE,
                     'createdAt' => new \DateTimeImmutable($access->created_at),
+                    'phone' => $access->credentials['phone'],
                 ]);
             }
 
             if (Entity\Access\AccessType::SOCIAL === $access->type) {
                 return $this->hydrator->hydrate(Entity\Access\SocialAccess::class, [
+                    'type' => Entity\Access\AccessType::SOCIAL,
+                    'createdAt' => new \DateTimeImmutable($access->created_at),
                     'email' => $access->credentials['email'],
                     'socialId' => $access->credentials['socialId'],
-                    'createdAt' => new \DateTimeImmutable($access->created_at),
                 ]);
             }
 

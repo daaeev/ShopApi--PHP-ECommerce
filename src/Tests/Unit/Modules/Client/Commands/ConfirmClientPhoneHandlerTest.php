@@ -70,7 +70,7 @@ class ConfirmClientPhoneHandlerTest extends TestCase
             ->with($this->confirmationUuid, $this->command->inputCode);
 
         $phone = $this->generatePhone();
-        $this->client->expects($this->once())
+        $this->client->expects($this->exactly(2))
             ->method('getContacts')
             ->willReturn($this->contacts);
 
@@ -91,6 +91,13 @@ class ConfirmClientPhoneHandlerTest extends TestCase
             ->with($this->callback(function (PhoneAccess $commandAccess) use ($access) {
                 return $commandAccess->equalsTo($access);
             }));
+
+        $this->contacts->expects($this->once())
+            ->method('isPhoneConfirmed')
+            ->willReturn(false);
+
+        $this->client->expects($this->once())
+            ->method('confirmPhone');
 
         $this->clients->expects($this->once())
             ->method('update')
@@ -144,7 +151,7 @@ class ConfirmClientPhoneHandlerTest extends TestCase
             ->with($this->confirmationUuid, $this->command->inputCode);
 
         $phone = $this->generatePhone();
-        $this->client->expects($this->once())
+        $this->client->expects($this->exactly(2))
             ->method('getContacts')
             ->willReturn($this->contacts);
 
@@ -160,7 +167,82 @@ class ConfirmClientPhoneHandlerTest extends TestCase
             }))
             ->willReturn(true);
 
+        $this->contacts->expects($this->once())
+            ->method('isPhoneConfirmed')
+            ->willReturn(false);
+
+        $this->client->expects($this->once())
+            ->method('confirmPhone');
+
         $this->client->expects($this->never())->method('addAccess');
+
+        $this->clients->expects($this->once())
+            ->method('update')
+            ->with($this->client);
+
+        $this->auth->expects($this->once())
+            ->method('authorize')
+            ->with($this->callback(function (PhoneAccess $commandAccess) use ($access) {
+                return $commandAccess->equalsTo($access);
+            }));
+
+        $this->client->expects($this->once())
+            ->method('flushEvents')
+            ->willReturn([$this->event]);
+
+        $this->eventBus->expects($this->once())
+            ->method('dispatch')
+            ->with($this->event);
+
+        $handler = new ConfirmClientPhoneHandler($this->clients, $this->auth);
+        $handler->setDispatcher($this->eventBus);
+        call_user_func($handler, $this->command);
+    }
+
+    public function testConfirmClientPhoneIfPhoneAlreadyConfirmed()
+    {
+        $this->auth->expects($this->once())
+            ->method('logged')
+            ->willReturn(null);
+
+        $this->clients->expects($this->once())
+            ->method('getByConfirmation')
+            ->with($this->confirmationUuid)
+            ->willReturn($this->client);
+
+        $this->client->expects($this->once())
+            ->method('applyConfirmation')
+            ->with($this->confirmationUuid, $this->command->inputCode);
+
+        $phone = $this->generatePhone();
+        $this->client->expects($this->exactly(2))
+            ->method('getContacts')
+            ->willReturn($this->contacts);
+
+        $this->contacts->expects($this->once())
+            ->method('getPhone')
+            ->willReturn($phone);
+
+        $access = new PhoneAccess($phone);
+        $this->client->expects($this->once())
+            ->method('hasAccess')
+            ->with($this->callback(function (PhoneAccess $commandAccess) use ($access) {
+                return $commandAccess->equalsTo($access);
+            }))
+            ->willReturn(false);
+
+        $this->client->expects($this->once())
+            ->method('addAccess')
+            ->with($this->callback(function (PhoneAccess $commandAccess) use ($access) {
+                return $commandAccess->equalsTo($access);
+            }));
+
+        $this->contacts->expects($this->once())
+            ->method('isPhoneConfirmed')
+            ->willReturn(true);
+
+        $this->client->expects($this->never())
+            ->method('confirmPhone');
 
         $this->clients->expects($this->once())
             ->method('update')

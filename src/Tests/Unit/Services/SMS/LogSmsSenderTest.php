@@ -27,7 +27,7 @@ class LogSmsSenderTest extends TestCase
         $message = uniqid();
         $this->logger->expects($this->once())
             ->method('info')
-            ->with("Sending SMS to $phone: $message");
+            ->with("Sending SMS to $phone: \"$message\"");
 
         $this->sms->send($phone, $message);
     }

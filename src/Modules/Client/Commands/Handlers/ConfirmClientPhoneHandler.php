@@ -34,6 +34,10 @@ class ConfirmClientPhoneHandler implements DispatchEventsInterface
             $client->addAccess($access);
         }
 
+        if (!$client->getContacts()->isPhoneConfirmed()) {
+            $client->confirmPhone();
+        }
+
         $this->clients->update($client);
         $this->auth->authorize($access);
         $this->dispatchEvents($client->flushEvents());

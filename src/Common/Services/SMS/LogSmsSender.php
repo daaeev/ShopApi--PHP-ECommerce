@@ -12,6 +12,6 @@ class LogSmsSender implements SmsSenderInterface
 
     public function send(string $phone, string $message): void
     {
-        $this->logger->info("Sending SMS to $phone: $message");
+        $this->logger->info("Sending SMS to $phone: \"$message\"");
     }
 }

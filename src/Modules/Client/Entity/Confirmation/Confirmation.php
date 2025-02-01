@@ -7,7 +7,7 @@ class Confirmation
     private ConfirmationUuid $uuid;
     private int|string $code;
     private \DateTimeImmutable $expiredAt;
-    private readonly \DateTimeImmutable $createdAt;
+    private \DateTimeImmutable $createdAt;
     private ?\DateTimeImmutable $updatedAt = null;
 
     public function __construct(

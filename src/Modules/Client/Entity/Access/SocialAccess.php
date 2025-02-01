@@ -8,8 +8,8 @@ use Project\Common\Utils\ContactsValidator;
 class SocialAccess extends Access
 {
     public function __construct(
-        private readonly string $email,
-        private readonly string $socialId,
+        private string $email,
+        private string $socialId,
     ) {
         ContactsValidator::validateEmail($this->email);
         Assert::notEmpty($this->socialId);

@@ -2,9 +2,9 @@
 
 namespace Project\Modules\Client\Queries\Handlers;
 
-use Project\Modules\Client\Queries\GetClientQuery;
 use Project\Modules\Client\Auth\AuthManagerInterface;
 use Project\Modules\Client\Utils\ClientEntity2DTOConverter;
+use Project\Modules\Client\Queries\GetAuthenticatedClientQuery;
 
 class GetAuthenticatedClientHandler
 {
@@ -12,7 +12,7 @@ class GetAuthenticatedClientHandler
         private AuthManagerInterface $authManager,
     ) {}
 
-    public function __invoke(GetClientQuery $query): array
+    public function __invoke(GetAuthenticatedClientQuery $query): array
     {
         $logged = $this->authManager->logged();
         if (null === $logged) {

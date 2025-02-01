@@ -7,7 +7,7 @@ use Project\Common\Utils\ContactsValidator;
 class PhoneAccess extends Access
 {
     public function __construct(
-        private readonly string $phone
+        private string $phone
     ) {
         ContactsValidator::validatePhone($this->phone);
         parent::__construct(AccessType::PHONE);
