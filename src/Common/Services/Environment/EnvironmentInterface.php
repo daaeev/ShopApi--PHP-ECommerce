@@ -9,4 +9,8 @@ interface EnvironmentInterface
     public function getAdministrator(): ?Administrator;
 
     public function getLanguage(): Language;
+
+    public function getEnvironment(): Environment;
+
+    public function useEnvironment(Environment $environment): void;
 }

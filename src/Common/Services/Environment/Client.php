@@ -3,8 +3,9 @@
 namespace Project\Common\Services\Environment;
 
 use Webmozart\Assert\Assert;
+use Project\Common\Utils\Arrayable;
 
-class Client
+class Client implements Arrayable
 {
     public function __construct(
         private string $hash,
@@ -28,5 +29,13 @@ class Client
         $sameHash = $this->hash === $other->hash;
         $sameId = !empty($this->id) && ($this->id === $other->id);
         return $sameId || $sameHash;
+    }
+
+    public function toArray(): array
+    {
+        return [
+            'hash' => $this->hash,
+            'id' => $this->id,
+        ];
     }
 }

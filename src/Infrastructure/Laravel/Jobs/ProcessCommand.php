@@ -6,6 +6,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Project\Common\Services\Environment\Environment;
+use Project\Common\Services\Environment\EnvironmentInterface;
 use Project\Common\ApplicationMessages\ApplicationMessagesManager;
 use Project\Common\ApplicationMessages\ApplicationMessageInterface;
 
@@ -14,15 +16,23 @@ class ProcessCommand implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable;
 
     public function __construct(
-        private readonly ApplicationMessageInterface $command
+        private readonly ApplicationMessageInterface $command,
+        private readonly Environment $environment,
     ) {}
 
-    public function handle(ApplicationMessagesManager $manager): void
-    {
+    public function handle(
+        EnvironmentInterface $environment,
+        ApplicationMessagesManager $manager
+    ): void {
+        $currentEnvironment = $environment->getEnvironment();
+        $environment->useEnvironment($this->environment);
+
         try {
             $manager->dispatchCommand($this->command);
         } catch (\Throwable $e) {
             $this->fail($e);
+        } finally {
+            $environment->useEnvironment($currentEnvironment);
         }
     }
 }

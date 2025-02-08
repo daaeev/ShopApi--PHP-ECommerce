@@ -9,6 +9,8 @@ use Project\Common\Services\Cookie\CookieManagerInterface;
 
 class EnvironmentService implements EnvironmentInterface
 {
+    private ?Environment $customEnvironment = null;
+
     public function __construct(
         private CookieManagerInterface $cookie,
         private AdministratorsApi $administrators,
@@ -18,6 +20,10 @@ class EnvironmentService implements EnvironmentInterface
 
     public function getClient(): Client
     {
+        if (isset($this->customEnvironment)) {
+            return $this->customEnvironment->getClient();
+        }
+
         return new Client($this->getClientHashCookie(), $this->getAuthenticatedClientId());
     }
 
@@ -37,6 +43,10 @@ class EnvironmentService implements EnvironmentInterface
 
     public function getAdministrator(): ?Administrator
     {
+        if (isset($this->customEnvironment)) {
+            return $this->customEnvironment->getAdministrator();
+        }
+
         if (empty($authenticated = $this->administrators->getAuthenticated())) {
             return null;
         }
@@ -46,6 +56,28 @@ class EnvironmentService implements EnvironmentInterface
 
     public function getLanguage(): Language
     {
+        if (isset($this->customEnvironment)) {
+            return $this->customEnvironment->getLanguage();
+        }
+
         return Language::from(App::currentLocale());
+    }
+
+    public function getEnvironment(): Environment
+    {
+        if (isset($this->customEnvironment)) {
+            return $this->customEnvironment;
+        }
+
+        return new Environment(
+            client: $this->getClient(),
+            admin: $this->getAdministrator(),
+            language: $this->getLanguage()
+        );
+    }
+
+    public function useEnvironment(Environment $environment): void
+    {
+        $this->customEnvironment = $environment;
     }
 }
