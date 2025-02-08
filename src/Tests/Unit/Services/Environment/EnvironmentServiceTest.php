@@ -3,26 +3,35 @@
 namespace Project\Tests\Unit\Services\Environment;
 
 use Illuminate\Support\Facades\App;
-use Project\Common\Administrators\Role;
 use Project\Modules\Client\Api\ClientsApi;
+use Project\Common\Services\Environment\Client;
 use Project\Common\Services\Environment\Language;
 use Project\Modules\Administrators\Api\DTO\Admin;
+use Project\Common\Services\Environment\Environment;
+use Project\Tests\Unit\Modules\Helpers\AdminFactory;
 use Project\Tests\Unit\Modules\Helpers\ClientFactory;
 use Project\Modules\Client\Api\DTO\Client as ClientDTO;
+use Project\Common\Services\Environment\Administrator;
 use Project\Modules\Administrators\Api\AdministratorsApi;
 use Project\Common\Services\Cookie\CookieManagerInterface;
 use Project\Common\Services\Environment\EnvironmentService;
 use Project\Modules\Client\Utils\ClientEntity2DTOConverter;
 use Project\Common\Services\Environment\EnvironmentInterface;
+use Project\Modules\Administrators\Utils\AdministratorEntity2DTOConverter;
 
 class EnvironmentServiceTest extends \PHPUnit\Framework\TestCase
 {
-    use ClientFactory;
+    use ClientFactory, AdminFactory;
 
     private readonly CookieManagerInterface $cookie;
+
     private readonly AdministratorsApi $administrators;
+    private readonly Admin $adminDTO;
+
     private readonly ClientsApi $clients;
     private readonly ClientDTO $clientDTO;
+
+    private readonly Environment $customEnvironment;
     private readonly EnvironmentInterface $environment;
 
     private readonly string $hashCookieName;
@@ -35,11 +44,17 @@ class EnvironmentServiceTest extends \PHPUnit\Framework\TestCase
             ->disableOriginalConstructor()
             ->getMock();
 
+        $this->adminDTO = AdministratorEntity2DTOConverter::convert($this->generateAdmin());
+
         $this->clients = $this->getMockBuilder(ClientsApi::class)
             ->disableOriginalConstructor()
             ->getMock();
 
         $this->clientDTO = ClientEntity2DTOConverter::convert($this->generateClient());
+
+        $this->customEnvironment = $this->getMockBuilder(Environment::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
         $this->hashCookieName = uniqid();
         $this->hash = uniqid();
@@ -97,24 +112,36 @@ class EnvironmentServiceTest extends \PHPUnit\Framework\TestCase
         $this->environment->getClient();
     }
 
+    public function testGetClientWithCustomEnvironment()
+    {
+        $this->cookie->expects($this->never())
+            ->method('get')
+            ->with($this->hashCookieName);
+
+        $this->clients->expects($this->never())
+            ->method('getAuthenticated');
+
+        $expectedClient = new Client(hash: uniqid(), id: random_int(1, 10));
+        $this->customEnvironment->expects($this->once())
+            ->method('getClient')
+            ->willReturn($expectedClient);
+
+        $this->environment->useEnvironment($this->customEnvironment);
+        $client = $this->environment->getClient();
+        $this->assertSame($expectedClient, $client);
+    }
+
     public function testGetAdministrator()
     {
-        $authenticated = new Admin(
-            id: random_int(1, 9999),
-            name: uniqid(),
-            login: uniqid(),
-            roles: [Role::ADMIN]
-        );
-
         $this->administrators->expects($this->once())
             ->method('getAuthenticated')
-            ->willReturn($authenticated);
+            ->willReturn($this->adminDTO);
 
         $administrator = $this->environment->getAdministrator();
         $this->assertNotNull($administrator);
-        $this->assertSame($administrator->getId(), $authenticated->id);
-        $this->assertSame($administrator->getName(), $authenticated->name);
-        $this->assertSame($administrator->getRoles(), $authenticated->roles);
+        $this->assertSame($administrator->getId(), $this->adminDTO->id);
+        $this->assertSame($administrator->getName(), $this->adminDTO->name);
+        $this->assertSame($administrator->getRoles(), $this->adminDTO->roles);
     }
 
     public function testGetAdministratorIfUnauthenticated()
@@ -127,6 +154,21 @@ class EnvironmentServiceTest extends \PHPUnit\Framework\TestCase
         $this->assertNull($administrator);
     }
 
+    public function testGetAdministratorWithCustomEnvironment()
+    {
+        $this->administrators->expects($this->never())
+            ->method('getAuthenticated');
+
+        $expectedAdmin = new Administrator($this->adminDTO->id, $this->adminDTO->name, $this->adminDTO->roles);
+        $this->customEnvironment->expects($this->once())
+            ->method('getAdministrator')
+            ->willReturn($expectedAdmin);
+
+        $this->environment->useEnvironment($this->customEnvironment);
+        $administrator = $this->environment->getAdministrator();
+        $this->assertSame($expectedAdmin, $administrator);
+    }
+
     public function testGetLanguage()
     {
         App::shouldReceive('currentLocale')
@@ -135,5 +177,77 @@ class EnvironmentServiceTest extends \PHPUnit\Framework\TestCase
 
         $language = $this->environment->getLanguage();
         $this->assertSame(Language::default(), $language);
+    }
+
+    public function testGetLanguageWithCustomEnvironment()
+    {
+        App::shouldReceive('currentLocale')->never();
+
+        $this->customEnvironment->expects($this->once())
+            ->method('getLanguage')
+            ->willReturn(Language::default());
+
+        $this->environment->useEnvironment($this->customEnvironment);
+        $language = $this->environment->getLanguage();
+        $this->assertSame(Language::default(), $language);
+    }
+
+    public function testGetEnvironment()
+    {
+        // Client
+        $this->cookie->expects($this->once())
+            ->method('get')
+            ->with($this->hashCookieName)
+            ->willReturn($this->hash);
+
+        $this->clients->expects($this->once())
+            ->method('getAuthenticated')
+            ->willReturn($this->clientDTO);
+
+        // Administrator
+        $this->administrators->expects($this->once())
+            ->method('getAuthenticated')
+            ->willReturn($this->adminDTO);
+
+        // Language
+        App::shouldReceive('currentLocale')
+            ->once()
+            ->andReturn(Language::default()->value);
+
+        $environment = $this->environment->getEnvironment();
+
+        $this->assertSame($this->clientDTO->id, $environment->getClient()->getId());
+        $this->assertSame($this->hash, $environment->getClient()->getHash());
+
+        $this->assertNotNull($environment->getAdministrator());
+        $this->assertSame($environment->getAdministrator()->getId(), $this->adminDTO->id);
+        $this->assertSame($environment->getAdministrator()->getName(), $this->adminDTO->name);
+        $this->assertSame($environment->getAdministrator()->getRoles(), $this->adminDTO->roles);
+
+        $this->assertSame(Language::default(), $environment->getLanguage());
+    }
+
+    public function testGetCustomEnvironment()
+    {
+        // Client
+        $this->cookie->expects($this->never())
+            ->method('get')
+            ->with($this->hashCookieName)
+            ->willReturn($this->hash);
+
+        $this->clients->expects($this->never())
+            ->method('getAuthenticated')
+            ->willReturn($this->clientDTO);
+
+        // Administrator
+        $this->administrators->expects($this->never())
+            ->method('getAuthenticated')
+            ->willReturn($this->adminDTO);
+
+        // Language
+        App::shouldReceive('currentLocale')->never();
+
+        $this->environment->useEnvironment($this->customEnvironment);
+        $this->assertSame($this->customEnvironment, $this->environment->getEnvironment());
     }
 }

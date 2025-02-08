@@ -16,8 +16,8 @@ class ProcessCommand implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable;
 
     public function __construct(
-        private readonly ApplicationMessageInterface $command,
-        private readonly Environment $environment,
+        public readonly ApplicationMessageInterface $command,
+        public readonly Environment $customEnvironment,
     ) {}
 
     public function handle(
@@ -25,7 +25,7 @@ class ProcessCommand implements ShouldQueue
         ApplicationMessagesManager $manager
     ): void {
         $currentEnvironment = $environment->getEnvironment();
-        $environment->useEnvironment($this->environment);
+        $environment->useEnvironment($this->customEnvironment);
 
         try {
             $manager->dispatchCommand($this->command);

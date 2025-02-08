@@ -43,11 +43,12 @@ class EnvironmentService implements EnvironmentInterface
 
     public function getAdministrator(): ?Administrator
     {
-        if (isset($this->customEnvironment)) {
+        if (null !== $this->customEnvironment) {
             return $this->customEnvironment->getAdministrator();
         }
 
-        if (empty($authenticated = $this->administrators->getAuthenticated())) {
+        $authenticated = $this->administrators->getAuthenticated();
+        if (null === $authenticated) {
             return null;
         }
 

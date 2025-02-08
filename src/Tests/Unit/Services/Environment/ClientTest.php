@@ -62,4 +62,10 @@ class ClientTest extends \PHPUnit\Framework\TestCase
         $client2 = new Client(uniqid(), 2);
         $this->assertFalse($client1->same($client2));
     }
+
+    public function testToArray()
+    {
+        $client = new Client($hash = uniqid(), $id = random_int(1, 10));
+        $this->assertSame(['hash' => $hash, 'id' => $id], $client->toArray());
+    }
 }
