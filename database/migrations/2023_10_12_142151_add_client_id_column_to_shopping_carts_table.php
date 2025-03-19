@@ -15,13 +15,6 @@ return new class extends Migration
             $table->unsignedBigInteger('client_id')
                 ->after('client_hash')
                 ->nullable();
-
-            $table->index('client_id', 'idx-shopping_carts-client_id');
-            $table->foreign('client_id', 'fk-shopping_carts-client_id')
-                ->references('id')
-                ->on('clients')
-                ->nullOnDelete()
-                ->cascadeOnUpdate();
         });
     }
 
@@ -31,8 +24,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('shopping_carts', function (Blueprint $table) {
-            $table->dropForeign('fk-shopping_carts-client_id');
-            $table->dropIndex('idx-shopping_carts-client_id');
             $table->dropColumn('client_id');
         });
     }

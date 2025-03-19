@@ -3,7 +3,6 @@
 namespace Project\Infrastructure\Laravel;
 
 use Psr\Log\LoggerInterface;
-use Illuminate\Support\Facades\Config;
 use Project\Modules\Client\Api\ClientsApi;
 use Project\Common\Commands\SendSmsCommand;
 use Project\Common\Services\SMS\LogSmsSender;
@@ -46,7 +45,6 @@ class ProjectServiceProvider extends \Illuminate\Support\ServiceProvider
 
     public function register(): void
     {
-        $this->registerConfiguration();
         $this->registerProviders();
         $this->registerCookieManager();
         $this->registerEnvironment();
@@ -55,13 +53,6 @@ class ProjectServiceProvider extends \Illuminate\Support\ServiceProvider
         $this->registerBuses();
         $this->registerMessageManager();
         $this->registerCommonCommands();
-    }
-
-    private function registerConfiguration(): void
-    {
-        Config::set('project.application', require implode(DIRECTORY_SEPARATOR, [__DIR__, 'Configuration', 'application.php']));
-        Config::set('project.storage', require implode(DIRECTORY_SEPARATOR, [__DIR__, 'Configuration', 'storage.php']));
-        Config::set('project.client', require implode(DIRECTORY_SEPARATOR, [__DIR__, 'Configuration', 'client.php']));
     }
 
     private function registerProviders(): void
