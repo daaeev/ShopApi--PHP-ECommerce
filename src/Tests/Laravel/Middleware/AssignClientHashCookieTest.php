@@ -6,14 +6,13 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Project\Common\Services\Cookie\CookieManagerInterface;
+use Project\Common\Services\Configuration\ApplicationConfiguration;
 use Project\Infrastructure\Laravel\Middleware\AssignClientHashCookie;
 
 class AssignClientHashCookieTest extends \PHPUnit\Framework\TestCase
 {
     private readonly CookieManagerInterface $cookie;
-    private readonly string $cookieName;
-    private readonly int $cookieLifeTimeInMinutes;
-    private readonly int $hashLength;
+    private readonly ApplicationConfiguration $configuration;
     private readonly AssignClientHashCookie $middleware;
 
     private readonly Request $request;
@@ -23,16 +22,11 @@ class AssignClientHashCookieTest extends \PHPUnit\Framework\TestCase
     protected function setUp(): void
     {
         $this->cookie = $this->getMockBuilder(CookieManagerInterface::class)->getMock();
-        $this->cookieName = uniqid();
-        $this->cookieLifeTimeInMinutes = random_int(1, 100);
-        $this->hashLength = random_int(10, 20);
-        $this->middleware = new AssignClientHashCookie(
-            $this->cookie,
-            $this->cookieName,
-            $this->cookieLifeTimeInMinutes,
-            $this->hashLength,
-        );
+        $this->configuration = $this->getMockBuilder(ApplicationConfiguration::class)
+            ->disableOriginalConstructor()
+            ->getMock();
 
+        $this->middleware = new AssignClientHashCookie($this->cookie, $this->configuration);
         $this->request = $this->getMockBuilder(Request::class)
             ->disableOriginalConstructor()
             ->getMock();
@@ -46,17 +40,29 @@ class AssignClientHashCookieTest extends \PHPUnit\Framework\TestCase
 
     public function testAssignClientHash()
     {
+        $this->configuration->expects($this->exactly(2))
+            ->method('getClientHashCookieName')
+            ->willReturn($cookieName = 'clientHash');
+
         $this->cookie->expects($this->once())
             ->method('get')
-            ->with($this->cookieName)
+            ->with($cookieName)
             ->willReturn(null);
+
+        $this->configuration->expects($this->once())
+            ->method('getClientHashCookieLength')
+            ->willReturn($hashLength = random_int(10, 20));
+
+        $this->configuration->expects($this->once())
+            ->method('getClientHashCookieLifeTimeInMinutes')
+            ->willReturn($cookieLifeTimeInMinutes = random_int(10, 20));
 
         $this->cookie->expects($this->once())
             ->method('add')
             ->with(
-                $this->cookieName,
-                $this->callback(fn (string $hash) => $this->hashLength === mb_strlen($hash)),
-                $this->cookieLifeTimeInMinutes,
+                $cookieName,
+                $this->callback(fn (string $hash) => $hashLength === mb_strlen($hash)),
+                $cookieLifeTimeInMinutes,
             );
 
         $response = $this->middleware->handle($this->request, $this->next);
@@ -65,10 +71,18 @@ class AssignClientHashCookieTest extends \PHPUnit\Framework\TestCase
 
     public function testAssignClientHashIfCookieAlreadyExists()
     {
+        $this->configuration->expects($this->exactly(2))
+            ->method('getClientHashCookieName')
+            ->willReturn($cookieName = 'clientHash');
+
+        $this->configuration->expects($this->once())
+            ->method('getClientHashCookieLength')
+            ->willReturn($hashLength = random_int(10, 20));
+
         $this->cookie->expects($this->exactly(2))
             ->method('get')
-            ->with($this->cookieName)
-            ->willReturn(Str::random($this->hashLength));
+            ->with($cookieName)
+            ->willReturn(Str::random($hashLength));
 
         $response = $this->middleware->handle($this->request, $this->next);
         $this->assertSame($response, $this->response);
@@ -76,17 +90,29 @@ class AssignClientHashCookieTest extends \PHPUnit\Framework\TestCase
 
     public function testAssignClientHashIfCurrentHashNotValid()
     {
+        $this->configuration->expects($this->exactly(3))
+            ->method('getClientHashCookieName')
+            ->willReturn($cookieName = 'clientHash');
+
+        $this->configuration->expects($this->exactly(2))
+            ->method('getClientHashCookieLength')
+            ->willReturn($hashLength = random_int(10, 20));
+
         $this->cookie->expects($this->exactly(2))
             ->method('get')
-            ->with($this->cookieName)
-            ->willReturn(Str::random((int) ($this->hashLength / 2)));
+            ->with($cookieName)
+            ->willReturn(Str::random($hashLength - 1));
+
+        $this->configuration->expects($this->once())
+            ->method('getClientHashCookieLifeTimeInMinutes')
+            ->willReturn($cookieLifeTimeInMinutes = random_int(10, 20));
 
         $this->cookie->expects($this->once())
             ->method('add')
             ->with(
-                $this->cookieName,
-                $this->callback(fn (string $generatedHash) => mb_strlen($generatedHash) === $this->hashLength),
-                $this->cookieLifeTimeInMinutes,
+                $cookieName,
+                $this->callback(fn (string $generatedHash) => mb_strlen($generatedHash) === $hashLength),
+                $cookieLifeTimeInMinutes,
             );
 
         $response = $this->middleware->handle($this->request, $this->next);

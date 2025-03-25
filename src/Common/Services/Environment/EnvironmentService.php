@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\App;
 use Project\Modules\Client\Api\ClientsApi;
 use Project\Modules\Administrators\Api\AdministratorsApi;
 use Project\Common\Services\Cookie\CookieManagerInterface;
+use Project\Common\Services\Configuration\ApplicationConfiguration;
 
 class EnvironmentService implements EnvironmentInterface
 {
@@ -15,7 +16,7 @@ class EnvironmentService implements EnvironmentInterface
         private CookieManagerInterface $cookie,
         private AdministratorsApi $administrators,
         private ClientsApi $clients,
-        private string $hashCookieName = 'clientHash',
+        private ApplicationConfiguration $configuration,
     ) {}
 
     public function getClient(): Client
@@ -29,7 +30,7 @@ class EnvironmentService implements EnvironmentInterface
 
     private function getClientHashCookie(): string
     {
-        if (empty($hash = $this->cookie->get($this->hashCookieName))) {
+        if (empty($hash = $this->cookie->get($this->configuration->getClientHashCookieName()))) {
             throw new \DomainException('Client hash cookie does not instantiated');
         }
 

@@ -6,20 +6,23 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Project\Common\Services\Cookie\CookieManagerInterface;
+use Project\Common\Services\Configuration\ApplicationConfiguration;
 
 class AssignClientHashCookie
 {
     public function __construct(
         private CookieManagerInterface $cookie,
-        private string $cookieName = 'clientHash',
-        private int $cookieLifeTimeInMinutes = 1440,
-        private int $hashLength = 40
+        private ApplicationConfiguration $configuration,
     ) {}
 
     public function handle(Request $request, \Closure $next): Response
     {
         if (!$this->hashAssigned() || !$this->hashIsValid()) {
-            $this->cookie->add($this->cookieName, $this->generateHash(), $this->cookieLifeTimeInMinutes);
+            $this->cookie->add(
+                $this->configuration->getClientHashCookieName(),
+                $this->generateHash(),
+                $this->configuration->getClientHashCookieLifeTimeInMinutes(),
+            );
         }
 
         return $next($request);
@@ -27,17 +30,17 @@ class AssignClientHashCookie
 
     private function hashAssigned(): bool
     {
-        return !empty($this->cookie->get($this->cookieName));
+        return !empty($this->cookie->get($this->configuration->getClientHashCookieName()));
     }
 
     private function hashIsValid(): bool
     {
-        $hash = $this->cookie->get($this->cookieName);
-        return is_string($hash) && (mb_strlen($hash) === $this->hashLength);
+        $hash = $this->cookie->get($this->configuration->getClientHashCookieName());
+        return is_string($hash) && (mb_strlen($hash) === $this->configuration->getClientHashCookieLength());
     }
 
     private function generateHash(): string
     {
-        return Str::random($this->hashLength);
+        return Str::random($this->configuration->getClientHashCookieLength());
     }
 }

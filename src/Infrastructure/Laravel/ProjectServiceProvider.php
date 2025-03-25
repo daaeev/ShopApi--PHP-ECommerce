@@ -3,23 +3,20 @@
 namespace Project\Infrastructure\Laravel;
 
 use Psr\Log\LoggerInterface;
-use Project\Modules\Client\Api\ClientsApi;
 use Project\Common\Commands\SendSmsCommand;
 use Project\Common\Services\SMS\LogSmsSender;
 use Project\Common\Services\SMS\SmsSenderInterface;
 use Project\Common\Commands\Handlers\SendSmsHandler;
 use Project\Common\ApplicationMessages\Buses\RequestBus;
-use Project\Modules\Administrators\Api\AdministratorsApi;
 use Project\Common\Services\Cookie\CookieManagerInterface;
 use Project\Infrastructure\Laravel\Services\CookieManager;
-use Project\Common\Services\Environment\EnvironmentService;
 use Project\Common\Services\Translator\TranslatorInterface;
 use Project\Common\Services\Environment\EnvironmentInterface;
 use Project\Infrastructure\Laravel\Services\LaravelTranslator;
 use Project\Common\ApplicationMessages\Buses\CompositeEventBus;
 use Project\Common\ApplicationMessages\Buses\CompositeRequestBus;
 use Project\Common\ApplicationMessages\ApplicationMessagesManager;
-use Project\Infrastructure\Laravel\Middleware\AssignClientHashCookie;
+use Project\Common\Services\Configuration\ApplicationConfiguration;
 use Project\Common\ApplicationMessages\Events\DispatchEventsInterface;
 use Project\Modules\Client\Infrastructure\Laravel\ClientsServiceProvider;
 use Project\Common\ApplicationMessages\Buses\Decorators\LoggingBusDecorator;
@@ -43,13 +40,15 @@ class ProjectServiceProvider extends \Illuminate\Support\ServiceProvider
         SendSmsCommand::class => SendSmsHandler::class,
     ];
 
+    public array $singletons = [
+        CookieManagerInterface::class => CookieManager::class,
+    ];
+
     public function register(): void
     {
         $this->registerProviders();
-        $this->registerCookieManager();
-        $this->registerEnvironment();
+        $this->registerConfiguration();
         $this->registerSmsSender();
-        $this->registerAssignClientHashMiddleware();
         $this->registerBuses();
         $this->registerMessageManager();
         $this->registerCommonCommands();
@@ -62,21 +61,11 @@ class ProjectServiceProvider extends \Illuminate\Support\ServiceProvider
         }
     }
 
-    private function registerCookieManager(): void
+    private function registerConfiguration(): void
     {
-        $this->app->singleton(CookieManagerInterface::class, CookieManager::class);
-    }
-
-    private function registerEnvironment(): void
-    {
-        $this->app->singleton(EnvironmentInterface::class, function ($app) {
-            return new EnvironmentService(
-                $app->make(CookieManagerInterface::class),
-                $app->make(AdministratorsApi::class),
-                $app->make(ClientsApi::class),
-                config('project.application.client-hash-cookie-name'),
-            );
-        });
+        $this->app->when(ApplicationConfiguration::class)
+            ->needs('$config')
+            ->give(config('project.application'));
     }
 
     private function registerSmsSender(): void
@@ -93,24 +82,12 @@ class ProjectServiceProvider extends \Illuminate\Support\ServiceProvider
         $this->app->singleton(SmsSenderInterface::class, $senders[$currentSender]);
     }
 
-    private function registerAssignClientHashMiddleware(): void
-    {
-        $this->app->singleton(AssignClientHashCookie::class, function ($app) {
-            return new AssignClientHashCookie(
-                $app->make(CookieManagerInterface::class),
-                config('project.application.client-hash-cookie-name'),
-                config('project.application.client-hash-cookie-lifetime-in-minutes'),
-                config('project.application.client-hash-cookie-length'),
-            );
-        });
-    }
-
     private function registerBuses(): void
     {
         $this->app->singleton('CommandBus', function () {
             return new LoggingBusDecorator(
-                new TransactionBusDecorator(new CompositeRequestBus),
-                $this->app->make(LoggerInterface::class)
+                decorated: new TransactionBusDecorator(decorated: new CompositeRequestBus),
+                logger: $this->app->make(LoggerInterface::class)
             );
         });
 
