@@ -118,6 +118,7 @@ class Order extends Aggregate
         $this->delivery = clone $this->delivery;
         $this->offers = clone $this->offers;
         $this->promocode = clone $this->promocode;
+        $this->payments = clone $this->payments;
         $this->createdAt = clone $this->createdAt;
         $this->updatedAt = $this->updatedAt ? clone $this->updatedAt : null;
     }

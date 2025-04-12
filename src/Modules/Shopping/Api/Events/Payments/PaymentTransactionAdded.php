@@ -22,7 +22,7 @@ class PaymentTransactionAdded extends AbstractPaymentEvent
     public function getData(): array
     {
         return [
-            'payment' => parent::getData(),
+            ...parent::getData(),
             'transaction' => [] // TODO
         ];
     }
