@@ -8,4 +8,5 @@ enum OrderEvent: string
     case UPDATED = 'orders.updated';
     case DELETED = 'orders.deleted';
     case COMPLETED = 'orders.completed';
+    case PAYMENT_STATUS_UPDATED = 'orders.paymentStatusUpdated';
 }

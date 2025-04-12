@@ -8,6 +8,16 @@ class Transactions
         private array $transactions = [],
     ) {}
 
+    public function __clone(): void
+    {
+        $transactions = [];
+        foreach ($this->transactions as $transaction) {
+            $transactions[] = clone $transaction;
+        }
+
+        $this->transactions = $transactions;
+    }
+
     public function add(Transaction $transaction): void
     {
         if ($this->contains($transaction)) {

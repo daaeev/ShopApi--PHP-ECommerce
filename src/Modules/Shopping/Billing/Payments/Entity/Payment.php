@@ -2,9 +2,10 @@
 
 namespace Project\Modules\Shopping\Billing\Payments\Entity;
 
+use Webmozart\Assert\Assert;
 use Project\Common\Entity\Aggregate;
 use Project\Common\Product\Currency;
-use Project\Modules\Shopping\Api\Events\Payments\PaymentUpdated;
+use Project\Modules\Shopping\Api\Events\Payments\PaymentCreated;
 use Project\Modules\Shopping\Api\Events\Payments\PaymentStatusUpdated;
 use Project\Modules\Shopping\Api\Events\Payments\PaymentTransactionAdded;
 
@@ -12,6 +13,7 @@ class Payment extends Aggregate
 {
     private PaymentId $id;
     private PaymentUuid $uuid;
+    private OrderId $orderId;
     private float $amount;
     private Currency $currency;
     private Gateway $gateway;
@@ -24,6 +26,7 @@ class Payment extends Aggregate
     public function __construct(
         PaymentId $id,
         PaymentUuid $uuid,
+        OrderId $orderId,
         float $amount,
         Currency $currency,
         Gateway $gateway,
@@ -31,6 +34,7 @@ class Payment extends Aggregate
     ) {
         $this->id = $id;
         $this->uuid = $uuid;
+        $this->orderId = $orderId;
         $this->amount = $amount;
         $this->currency = $currency;
         $this->gateway = $gateway;
@@ -39,6 +43,22 @@ class Payment extends Aggregate
         $this->transactions = new Transactions;
         $this->createdAt = new \DateTimeImmutable;
         $this->updatedAt = null;
+        $this->guardAmountGreaterThanZero();
+        $this->addEvent(new PaymentCreated($this));
+    }
+
+    private function guardAmountGreaterThanZero(): void
+    {
+        Assert::greaterThan($this->amount, 0, 'Payment amount must be greater than zero');
+    }
+
+    public function __clone(): void
+    {
+        $this->id = clone $this->id;
+        $this->uuid = clone $this->uuid;
+        $this->transactions = clone $this->transactions;
+        $this->createdAt = clone $this->createdAt;
+        $this->updatedAt = $this->updatedAt ? clone $this->updatedAt : null;
     }
 
     public function addTransaction(Transaction $transaction): void
@@ -60,7 +80,6 @@ class Payment extends Aggregate
     private function updated(): void
     {
         $this->updatedAt = new \DateTimeImmutable;
-        $this->addEvent(new PaymentUpdated($this));
     }
 
     private function refreshStatus(): void
@@ -93,7 +112,7 @@ class Payment extends Aggregate
         }
     }
 
-    private function getPaidAmount(): float
+    public function getPaidAmount(): float
     {
         $paidAmount = 0;
         foreach ($this->transactions->all() as $transaction) {
@@ -105,7 +124,7 @@ class Payment extends Aggregate
         return $paidAmount;
     }
 
-    private function getRefundedAmount(): float
+    public function getRefundedAmount(): float
     {
         $refundedAmount = 0;
         foreach ($this->transactions->all() as $transaction) {
@@ -125,6 +144,11 @@ class Payment extends Aggregate
     public function getUuid(): PaymentUuid
     {
         return $this->uuid;
+    }
+
+    public function getOrderId(): OrderId
+    {
+        return $this->orderId;
     }
 
     public function getAmount(): float

@@ -13,6 +13,12 @@ class Transaction
         private \DateTimeImmutable $createdAt,
     ) {}
 
+    public function __clone(): void
+    {
+        $this->uuid = clone $this->uuid;
+        $this->createdAt = clone $this->createdAt;
+    }
+
     public function getRelatedPaymentStatus(float $paymentAmount): PaymentStatus
     {
         if ($this->status === TransactionStatus::Pending) {

@@ -15,6 +15,7 @@ use Project\Modules\Shopping\Api\Events\Orders\OrderUpdated;
 use Project\Modules\Shopping\Api\Events\Orders\OrderDeleted;
 use Project\Modules\Shopping\Order\Entity\Delivery\DeliveryInfo;
 use Project\Modules\Shopping\Api\Events\Orders\OrderCompleted;
+use Project\Modules\Shopping\Api\Events\Orders\PaymentStatusUpdated;
 
 class Order extends Aggregate
 {
@@ -27,6 +28,7 @@ class Order extends Aggregate
     private OffersCollection $offers;
     private Currency $currency;
     private ?Promocode $promocode = null;
+    private Payments $payments;
     private int $totalPrice; // Price with discounts
     private int $regularPrice; // Price without discount
     private ?string $customerComment = null;
@@ -46,6 +48,7 @@ class Order extends Aggregate
         $this->delivery = $delivery;
         $this->offers = new OffersCollection($offers);
         $this->currency = $currency;
+        $this->payments = new Payments;
         $this->createdAt = new \DateTimeImmutable;
         $this->guardOffersCantBeEmpty();
         $this->guardOffersIdsIsUnique();
@@ -216,15 +219,43 @@ class Order extends Aggregate
         $this->updated();
     }
 
-    public function updatePaymentStatus(PaymentStatus $status): void
+    public function addPayment(Payment $payment): void
     {
-        $this->guardOrderNotCompleted();
-        if ($this->paymentStatus === $status) {
-            throw new \DomainException('Order payment already have same status');
+        if ($this->payments->contains($payment)) {
+            throw new \DomainException('Same payment already exists');
         }
 
-        $this->paymentStatus = $status;
+        $this->payments->add($payment);
+        $this->refreshPaymentStatus();
         $this->updated();
+    }
+
+    private function refreshPaymentStatus(): void
+    {
+        $newPaymentStatus = $this->payments->getOrderPaymentStatus($this->totalPrice);
+        if ($newPaymentStatus === $this->paymentStatus) {
+            return;
+        }
+
+        $this->paymentStatus = $newPaymentStatus;
+        $this->addEvent(new PaymentStatusUpdated($this));
+        $this->updated();
+    }
+
+    public function updatePayment(Payment $payment): void
+    {
+        if (false === $this->payments->contains($payment)) {
+            throw new \DomainException('Same payment already exists');
+        }
+
+        $this->payments->update($payment);
+        $this->refreshPaymentStatus();
+        $this->updated();
+    }
+
+    public function getPayment(PaymentUuid $uuid): Payment
+    {
+        return $this->payments->getByUuid($uuid);
     }
 
     public function updateDelivery(DeliveryInfo $delivery): void
